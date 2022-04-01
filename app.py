@@ -1,11 +1,11 @@
-# import Crypto  
-# import Crypto.Random 
-# from Crypto.PublicKey import RSA 
-# from Crypto.Signature import PKCS1_v1_5  
-# from Crypto.Hash import SHA 
+import Crypto  
+import Crypto.Random 
+from Crypto.PublicKey import RSA 
+from Crypto.Signature import PKCS1_v1_5  
+from Crypto.Hash import SHA 
 import binascii 
 import json  
-# import requests 
+import requests 
 from flask import Flask, jsonify, request 
 from urllib.parse import urlparse 
 
@@ -46,6 +46,7 @@ class Transaction:
 
 
 class Wallet:
+    
     def __init__(self):
         random = Crypto.Random.new().read
         self._private_key = RSA.generate(1024, random)
@@ -62,18 +63,14 @@ class Wallet:
         return pubkey.decode('ascii')
 
     
-# if __name__ == '__main__':
-#   # myWallet = Wallet()
+if __name__ == '__main__':
+    myWallet = Wallet()
 #   # blockchain = Blockchain()
-#   app.run()
+    app.run()
 
 
 @app.route("/")
 def hello():
     return "Hello World!"
-
-
-if __name__ == '__main__':
-    app.run()
 
 
