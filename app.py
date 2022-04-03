@@ -9,6 +9,7 @@ import requests
 from flask import Flask, jsonify, request, render_template
 from urllib.parse import urlparse 
 
+
 app = Flask(__name__)
 
 @app.route("/")
