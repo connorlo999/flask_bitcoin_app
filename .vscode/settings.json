@@ -1,0 +1,9 @@
+{
+    "python.analysis.useImportHeuristic": true,
+    "python.analysis.extraPaths": [
+        "./sources",
+        "./src",
+        "./modules"
+    ]
+
+}
