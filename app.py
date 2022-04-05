@@ -404,7 +404,7 @@ def mine():
 
 
 if __name__ == '__main__':
-    Wallet_1 = Wallet()    # create wallet with $0
+    myWallet = Wallet()    # create wallet with $0
     Wallet_2 = Wallet(300.0)  # e.g. create wallet with $300
     Wallet_3 = Wallet(200.0)
     blockchain = Blockchain()
