@@ -329,21 +329,21 @@ def register_node():
 
     values = request.get_json()
 
-    required_fields = ['node', 'com_port']
-    if not all(k in values for k in required_fields):
-        return 'Missing fields', 400
+    required = ['node', 'com_port']
+    if not all(k in values for k in required):
+        return 'Missing values', 400
+
+    if (values['node'] == "" and values['com_port'] == "") or values['node'] == "":
+        return 'Input invalid', 400
 
     node = values['node']
-    com_port = values['com_port']
-
-    if com_port is not None:
+    if values['com_port'] != "":
+        com_port = values['com_port']
         blockchain.register_node(request.remote_addr + ":" + com_port)
-        com_port_register = True
-        #return "ok", 200
 
     blockchain.register_node(node)
     node_list = requests.get('http://' + node + '/get_nodes')
-    if com_port_register:
+    if node_list.status_code == 200:
         node_list = node_list.json()['nodes']
         for node in node_list:
             blockchain.register_node(node)
@@ -405,6 +405,5 @@ if __name__ == '__main__':
     blockchain = Blockchain()
     port = 5001
     app.run(host='127.0.0.1', port=port, debug=True)
-
 
 
