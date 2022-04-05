@@ -15,19 +15,22 @@ from urllib.parse import urlparse
 app = Flask(__name__)
 
 
+class json_format:
+    def obj_to_json(self):
+        return json.dumps(self, default=lambda o: o.__dict__)
+
+
 class Transaction:
     def __init__(self, sender, recipient, value):
         self.sender = sender
         self.recipient = recipient
         self.value = value
-        self.time = datetime.now()
 
     def to_dict(self):
         return {
             'sender': self.sender,
             'recipient': self.recipient,
             'value': self.value,
-            'time': self.time
         }
 
     def add_signature(self, signature_):
@@ -225,6 +228,19 @@ class Block:
         return sha256(str(self.to_dict()).encode()).hexdigest()
 
 
+@app.route('/wallet_identity', methods=['GET'])
+def wallet_identity():
+
+    pubkey = json.dumps(json_format.obj_to_json(myWallet.identity))
+    prikey = json.dumps(json_format.obj_to_json(myWallet.private))
+
+    response = {
+        'Public key': pubkey,
+        'Private key': prikey
+    }
+    return jsonify(response), 200
+
+
 @app.route('/new_transaction', methods=['POST'])
 def new_transaction():
 
@@ -234,12 +250,13 @@ def new_transaction():
     if not all(k in values for k in required):
         return 'Missing values', 400
 
-    transaction = Transaction(myWallet.identity, values['recipient_address'], values['amount'])
-    transaction.add_signature(myWallet.sign_transaction(transaction))
-    transaction_result = blockchain.add_new_transaction(transaction)
+    t = Transaction(myWallet.identity, values['recipient_address'], values['amount'])
+    signature = myWallet.sign_transaction(t)
+    t.add_signature(signature)
+    transaction_result = blockchain.add_new_transaction(t)
 
     if transaction_result:
-        response = {'message': 'Transaction will be added to Block'}
+        response = {'message': 'Transaction will be added to the block'}
         return jsonify(response), 201
     else:
         response = {'message': 'Invalid Transaction!'}
@@ -285,18 +302,22 @@ def get_nodes():
 def register_node():
 
     values = request.get_json()
-    node = values.get('node')
-    com_port = values.get('com_port')
+
+    required_fields = ['node', 'com_port']
+    if not all(k in values for k in required_fields):
+        return 'Missing fields', 400
+
+    node = values['node']
+    com_port = values['com_port']
 
     if com_port is not None:
         blockchain.register_node(request.remote_addr + ":" + com_port)
-        return "ok", 200
-    if node is None and com_port is None:
-        return "Error: Please supply a valid list of nodes", 400
+        com_port_register = True
+        #return "ok", 200
 
     blockchain.register_node(node)
     node_list = requests.get('http://' + node + '/get_nodes')
-    if node_list.status_code == 200:
+    if com_port_register:
         node_list = node_list.json()['nodes']
         for node in node_list:
             blockchain.register_node(node)
@@ -309,12 +330,14 @@ def register_node():
     if replaced:
         response = {
             'message': 'Longer authoritative chain found from peers, replacing ours',
-            'total_nodes': [node for node in blockchain.nodes]
+            'total_nodes': [node for node in blockchain.nodes],
+            'blockchain': blockchain.chain
         }
     else:
         response = {
             'message': 'New nodes have been added, but our chain is authoritative',
-            'total_nodes': [node for node in blockchain.nodes]
+            'total_nodes': [node for node in blockchain.nodes],
+            'blockchain': blockchain.chain
         }
     return jsonify(response), 201
 
@@ -352,7 +375,7 @@ def mine():
 if __name__ == '__main__':
     myWallet = Wallet()
     blockchain = Blockchain()
-    port = 5000
+    port = 5001
     app.run(host='127.0.0.1', port=port, debug=True)
 
 
