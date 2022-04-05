@@ -90,12 +90,12 @@ class Wallet:
 
 class Blockchain:
     difficulty = 2
+    nodes = set()
 
     def __init__(self):
         self.unconfirmed_transactions = []
         self.chain = []
         self.create_genesis_block()
-        self.nodes = set()
 
     def create_genesis_block(self):
         genesis_block = Block(0, [], datetime.now().strftime("%m/%d/%y, %H:%M:%S"), "0")
@@ -179,7 +179,7 @@ class Blockchain:
                     max_length = length
                     new_chain = chain
 
-        if new_chain:
+        if new_chain is not None:
             self.chain = json.loads(new_chain)
             return True
 
