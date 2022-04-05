@@ -50,7 +50,7 @@ class Transaction:
 
 
 class Wallet:
-    def __init__(self, deposit=0):
+    def __init__(self, deposit=0.0):
         random = Crypto.Random.new().read
         self._private_key = RSA.generate(1024, random)
         self._public_key = self._private_key.publickey()
@@ -79,7 +79,6 @@ class Wallet:
         if self.balance >= transaction_cost:
             return True
         else:
-            print(f'Balance: ${self.balance} is not enough for transaction ${transaction_cost}')
             return False
 
     def deposit(self, deposit):
@@ -87,7 +86,6 @@ class Wallet:
 
     def payment(self, cost):
         self._balance -= cost
-
 
 
 class Blockchain:
@@ -252,10 +250,12 @@ def wallet_identity():
 
     pubkey = json.dumps(json_format.obj_to_json(myWallet.identity))
     prikey = json.dumps(json_format.obj_to_json(myWallet.private))
+    balance = json.dumps(json_format.obj_to_json(myWallet.balance))
 
     response = {
         'Public key': pubkey,
-        'Private key': prikey
+        'Private key': prikey,
+        'Balance': balance
     }
     return jsonify(response), 200
 
@@ -269,7 +269,9 @@ def new_transaction():
     if not all(k in values for k in required):
         return 'Missing values', 400
 
-    if myWallet.check_balance(values['amount']):
+    transaction_fee = values['amount'] + 0.5
+
+    if myWallet.check_balance(transaction_fee):
         t = Transaction(myWallet.identity, values['recipient_address'], values['amount'])
         signature = myWallet.sign_transaction(t)
         t.add_signature(signature)
@@ -284,9 +286,8 @@ def new_transaction():
             return jsonify(response), 406
 
     else:
-        # did not create transaction, balance not enough
-        # Please add suitable jsonitfy (?) response, thanks
-        pass
+        response = {'message': 'Please check your balance!'}
+        return jsonify(response), 406
 
 
 @app.route('/get_transactions', methods=['GET'])
@@ -400,10 +401,8 @@ def mine():
 
 if __name__ == '__main__':
     #myWallet = Wallet()    # create wallet with $0
-    myWallet = Wallet(300)  # e.g. create wallet with $300
-    #myWallet.deposit(10)   # deposit $10 more
+    myWallet = Wallet(300.0)  # e.g. create wallet with $300
     blockchain = Blockchain()
-    port = 5001
+    port = 5000
     app.run(host='127.0.0.1', port=port, debug=True)
-
 
