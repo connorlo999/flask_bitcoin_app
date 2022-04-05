@@ -8,8 +8,9 @@ from datetime import datetime
 import binascii
 import json
 import requests
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template_string
 from urllib.parse import urlparse
+from json2html import *
 
 
 app = Flask(__name__)
@@ -318,7 +319,14 @@ def full_chain():
         'chain': json.dumps(blockchain.chain),
         'length': len(blockchain.chain),
     }
-    return jsonify(response), 200
+    #return jsonify(response), 200
+
+    # temporary measure for visualization, see if there is any better way
+    html_data = ''
+    for item in blockchain.chain:
+        html_data += json2html.convert(json=item)
+        html_data += '<br><br>'
+    return render_template_string(html_data)
 
 
 @app.route('/get_nodes', methods=['GET'])
