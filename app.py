@@ -50,10 +50,11 @@ class Transaction:
 
 
 class Wallet:
-    def __init__(self):
+    def __init__(self, deposit=0):
         random = Crypto.Random.new().read
         self._private_key = RSA.generate(1024, random)
         self._public_key = self._private_key.publickey()
+        self._balance = deposit
 
     def sign_transaction(self, transaction: Transaction):
         signer = PKCS1_v1_5.new(self._private_key)
@@ -69,6 +70,24 @@ class Wallet:
     def private(self):
         private_key = binascii.hexlify(self._private_key.exportKey(format='DER'))
         return private_key.decode('ascii')
+
+    @property
+    def balance(self):
+        return self._balance
+
+    def check_balance(self, transaction_cost):
+        if self.balance >= transaction_cost:
+            return True
+        else:
+            print(f'Balance: ${self.balance} is not enough for transaction ${transaction_cost}')
+            return False
+
+    def deposit(self, deposit):
+        self._balance += deposit
+
+    def payment(self, cost):
+        self._balance -= cost
+
 
 
 class Blockchain:
@@ -250,17 +269,24 @@ def new_transaction():
     if not all(k in values for k in required):
         return 'Missing values', 400
 
-    t = Transaction(myWallet.identity, values['recipient_address'], values['amount'])
-    signature = myWallet.sign_transaction(t)
-    t.add_signature(signature)
-    transaction_result = blockchain.add_new_transaction(t)
+    if myWallet.check_balance(values['amount']):
+        t = Transaction(myWallet.identity, values['recipient_address'], values['amount'])
+        signature = myWallet.sign_transaction(t)
+        t.add_signature(signature)
+        transaction_result = blockchain.add_new_transaction(t)
 
-    if transaction_result:
-        response = {'message': 'Transaction will be added to the block'}
-        return jsonify(response), 201
+        if transaction_result:
+            myWallet.payment(values['amount'])
+            response = {'message': 'Transaction will be added to the block'}
+            return jsonify(response), 201
+        else:
+            response = {'message': 'Invalid Transaction!'}
+            return jsonify(response), 406
+
     else:
-        response = {'message': 'Invalid Transaction!'}
-        return jsonify(response), 406
+        # did not create transaction, balance not enough
+        # Please add suitable jsonitfy (?) response, thanks
+        pass
 
 
 @app.route('/get_transactions', methods=['GET'])
@@ -373,7 +399,9 @@ def mine():
 
 
 if __name__ == '__main__':
-    myWallet = Wallet()
+    #myWallet = Wallet()    # create wallet with $0
+    myWallet = Wallet(300)  # e.g. create wallet with $300
+    #myWallet.deposit(10)   # deposit $10 more
     blockchain = Blockchain()
     port = 5001
     app.run(host='127.0.0.1', port=port, debug=True)
