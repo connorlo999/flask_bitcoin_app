@@ -247,12 +247,12 @@ class Block:
         return sha256(str(self.to_dict()).encode()).hexdigest()
 
 
-@app.route('/wallet_identity', methods=['GET'])
-def wallet_identity():
+@app.route('/<wallet_identity>', methods=['GET'])
+def wallet_identity(wallet_identity):
 
-    pubkey = json.dumps(json_format.obj_to_json(myWallet.identity))
-    prikey = json.dumps(json_format.obj_to_json(myWallet.private))
-    balance = json.dumps(json_format.obj_to_json(myWallet.balance))
+    pubkey = json.dumps(json_format.obj_to_json(globals()[f'{wallet_identity}'].identity))
+    prikey = json.dumps(json_format.obj_to_json(globals()[f'{wallet_identity}'].private))
+    balance = json.dumps(json_format.obj_to_json(globals()[f'{wallet_identity}'].balance))
 
     response = {
         'Public key': pubkey,
@@ -404,8 +404,9 @@ def mine():
 
 
 if __name__ == '__main__':
-    #myWallet = Wallet()    # create wallet with $0
-    myWallet = Wallet(300.0)  # e.g. create wallet with $300
+    Wallet_1 = Wallet()    # create wallet with $0
+    Wallet_2 = Wallet(300.0)  # e.g. create wallet with $300
+    Wallet_3 = Wallet(200.0)
     blockchain = Blockchain()
     port = 5000
     app.run(host='127.0.0.1', port=port, debug=True)
