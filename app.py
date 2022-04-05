@@ -136,6 +136,7 @@ class Blockchain:
     def mine(self, myWallet):
         block_reward = Transaction("Block_Reward", myWallet.identity, "5.0").to_json()
         self.unconfirmed_transactions.insert(0, block_reward)
+        myWallet.deposit(5.0)
         if not self.unconfirmed_transactions:
             return False
 
@@ -286,7 +287,8 @@ def new_transaction():
             return jsonify(response), 406
 
     else:
-        response = {'message': 'Please check your balance!'}
+        response = {'message': 'Please check your balance!',
+                    'Reminder': '0.5 is for transaction fee'}
         return jsonify(response), 406
 
 
