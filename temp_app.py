@@ -5,6 +5,7 @@ from Crypto.Signature import PKCS1_v1_5
 from hashlib import sha256
 from Crypto.Hash import SHA256
 from datetime import datetime
+from json import JSONEncoder
 import binascii
 import json
 import requests
@@ -14,9 +15,9 @@ from urllib.parse import urlparse
 app = Flask(__name__)
 
 
-class json_format:
+class json_format(JSONEncoder):
     def obj_to_json(self):
-        return json.dumps(self, default=lambda o: o.__dict__)
+        return self
 
 
 class Transaction:
@@ -195,7 +196,7 @@ class Blockchain:
                                   block['hash'],
                                   block['nonce'])
             if current_index + 1 < len(chain):
-                if current_block.compute_hash() != json.loads(chain[current_index + 1])['previous_hash']:
+                if block.compute_hash(current_block) != json.loads(chain[current_index + 1])['previous_hash']:
                     return False
             if isinstance(current_block.transactions, list):
                 for transaction in current_block.transactions:
@@ -204,8 +205,7 @@ class Blockchain:
                         continue
                     current_transaction = Transaction(transaction['sender'],
                                                       transaction['recipient'],
-                                                      transaction['value'],
-                                                      transaction['signature'])
+                                                      transaction['value'])
                     if not current_transaction.verify_transaction_signature():
                         return False
                 if not self.is_valid_proof(current_block, block['hash']):
@@ -219,13 +219,13 @@ class Blockchain:
 
 
 class Block:
-    def __init__(self, index, transactions, timestamp, previous_hash):
+    def __init__(self, index, transactions, timestamp, previous_hash, hash=None, nonce=0):
         self.index = index
         self.transactions = transactions
         self.timestamp = timestamp
         self.previous_hash = previous_hash
-        self.hash = None
-        self.nonce = 0
+        self.hash = hash
+        self.nonce = nonce
 
     def to_dict(self):
         return {
@@ -246,14 +246,15 @@ class Block:
 
 @app.route('/wallet_identity', methods=['GET'])
 def wallet_identity():
-    pubkey = json.dumps(json_format.obj_to_json(myWallet.identity))
-    prikey = json.dumps(json_format.obj_to_json(myWallet.private))
-    balance = json.dumps(json_format.obj_to_json(myWallet.balance))
+
+    pubkey = json_format.obj_to_json(myWallet.identity)
+    prikey = json_format.obj_to_json(myWallet.private)
+    balance = json_format.obj_to_json(myWallet.balance)
 
     response = {
+        'Balance': balance,
         'Public key': pubkey,
-        'Private key': prikey,
-        'Balance': balance
+        'Private key': prikey
     }
     return jsonify(response), 200
 
@@ -395,9 +396,12 @@ if __name__ == '__main__':
     # myWallet = Wallet()    # create wallet with $0
     myWallet = Wallet(300.0)  # e.g. create wallet with $300
     blockchain = Blockchain()
-    port = 5000
+    port = 5001
     app.run(host='127.0.0.1', port=port, debug=True)
 
+
+
+    
 """
 # /new_transaction
 {
