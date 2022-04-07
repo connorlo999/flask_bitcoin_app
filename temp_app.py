@@ -9,14 +9,16 @@ from json import JSONEncoder
 import binascii
 import json
 import requests
-from flask import Flask, jsonify, request #, render_template_string
+from flask import Flask, jsonify, request, render_template_string
 from urllib.parse import urlparse
 # from json2html import *
+
 
 # import time
 # import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
+
 
 app = Flask(__name__)
 
@@ -52,7 +54,7 @@ class Transaction:
             return False
 
     def to_json(self):
-        return json.dumps(self.__dict__, sort_keys=False)
+        return json.dumps(self.__dict__, sort_keys=False, default=str)
 
 
 class Wallet:
@@ -95,12 +97,12 @@ class Wallet:
 
 
 class Block:
-    def __init__(self, index, transactions, timestamp, previous_hash, nonce=0):
+    def __init__(self, index, transactions, timestamp, previous_hash, hash_=0, nonce=0):
         self.index = index
         self.transactions = transactions
         self.timestamp = timestamp
         self.previous_hash = previous_hash
-        self.hash = None
+        self.hash = hash_
         self.nonce = nonce
 
     def to_dict(self):
@@ -122,12 +124,12 @@ class Block:
 
 class Blockchain:
     difficulty = 2
-    nodes = set()
 
     def __init__(self):
         self.unconfirmed_transactions = []
         self.chain = []
         self.create_genesis_block()
+        self.nodes = set()
 
     def create_genesis_block(self):
         genesis_block = Block(0, [], datetime.now().strftime("%m/%d/%y, %H:%M:%S"), "0")
@@ -248,10 +250,28 @@ class Blockchain:
                                   block['transactions'],
                                   block['timestamp'],
                                   block['previous_hash'],
+                                  block['hash'],
                                   block['nonce'])
+            current_block_hash = str(current_block.hash)
+            if hasattr(current_block, 'hash'):
+                delattr(current_block, 'hash')
             if current_index + 1 < len(chain):
                 if current_block.compute_hash != json.loads(chain[current_index + 1])['previous_hash']:
                     return False
+            if isinstance(current_block.transactions, list):
+                for transaction in current_block.transactions:
+                    transaction = json.loads(transaction)
+                    if transaction['sender'] == 'Block_Reward':
+                        continue
+                    current_transaction = Transaction(transaction['sender'],
+                                                      transaction['recipient'],
+                                                      transaction['value'])
+                    current_transaction.signature = transaction['signature']
+                    if not current_transaction.verify_transaction_signature():
+                        return False
+                    hasattr(current_block, 'hash')
+                    if not self.is_valid_proof(current_block, current_block_hash):
+                        return False
             current_index += 1
         return True
 
@@ -263,14 +283,14 @@ class Blockchain:
 @app.route('/<wallet_identity>', methods=['GET'])
 def wallet_identity(wallet_identity):
 
-    pub_key = json.dumps(myWallet.identity, cls=json_format)
-    pri_key = json.dumps(myWallet.private, cls=json_format)
-    balance = json.dumps(myWallet.balance, cls=json_format)
+    pub_key = json.dumps(globals()[f'{wallet_identity}'].identity, cls=json_format)
+    pri_key = json.dumps(globals()[f'{wallet_identity}'].private, cls=json_format)
+    balance = json.dumps(globals()[f'{wallet_identity}'].balance, cls=json_format)
 
     response = {
-        'Balance': balance,
         'Public key': pub_key,
-        'Private key': pri_key
+        'Private key': pri_key,
+        'Balance': balance
     }
     return jsonify(response), 200
 
@@ -313,6 +333,7 @@ def new_transaction():
                     'Reminder': '0.5 is for transaction fee'}
         return jsonify(response), 406
 
+
 @app.route('/get_transactions', methods=['GET'])
 def get_transactions():
     transactions = blockchain.unconfirmed_transactions
@@ -339,15 +360,13 @@ def full_chain():
     }
     return jsonify(response), 200
 
-    """
     # temporary measure for visualization, see if there is any better way
-    #html_data = ''
+    # html_data = ''
     #for item in blockchain.chain:
     #    html_data += json2html.convert(json=item)
     #    html_data += '<br><br>'
-    #return render_template_string(html_data), 200
-    
-    """
+    # return render_template_string(html_data)
+
 
 @app.route('/get_nodes', methods=['GET'])
 def get_nodes():
@@ -439,7 +458,6 @@ def mine():
     }
     return jsonify(response), 200
 
-
 @app.route('/interest', methods=['POST'])
 def interest():
     values = request.json
@@ -473,13 +491,12 @@ def auto_interest_exc():
 sched = BackgroundScheduler(daemon=True)
 sched.add_job(auto_interest_exc, 'interval', seconds=10)
 
-
 if __name__ == '__main__':
     myWallet = Wallet()    # create wallet with $0
     interest_wallet = Wallet(300.0)  # e.g. create wallet with $300
     Wallet_3 = Wallet(200.0)
     blockchain = Blockchain()
-    port = 5001
+    port = 5000
     host = '127.0.0.1'
     sched.start()
     app.run(host=host, port=port, debug=True, use_reloader=False)
