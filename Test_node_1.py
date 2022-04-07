@@ -13,6 +13,11 @@ from urllib.parse import urlparse
 from json2html import *
 
 
+import time
+import atexit
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
+
 app = Flask(__name__)
 
 
@@ -151,6 +156,28 @@ class Blockchain:
             return new_block
         else:
             return False
+
+    def interest(self, wallet_identity):
+        if wallet_identity.balance == 0:
+            return False
+        rate = 50
+        interest_earn = wallet_identity.balance*(1+rate/100-1)
+
+        interest_trans = Transaction("Interest", wallet_identity.identity, str(interest_earn)).to_json()
+        self.unconfirmed_transactions.insert(0, interest_trans)
+        wallet_identity.deposit(interest_earn)
+        if not self.unconfirmed_transactions:
+            return False
+
+        new_block = Block(index=self.last_block['index'] + 1, transactions=self.unconfirmed_transactions,
+                          timestamp=datetime.now().strftime("%m/%d/%y, %H:%M:%S"),
+                          previous_hash=self.last_block['hash'])  
+        proof = self.proof_of_work(new_block)
+        if self.add_block(new_block, proof):
+            self.unconfirmed_transactions = []
+            return new_block
+        else:
+            return False                    
 
     def register_node(self, node_url):
 
@@ -417,12 +444,41 @@ def mine():
     }
     return jsonify(response), 200
 
+@app.route('/interest', methods=['POST'])
+def interest():
+    values = request.json
+    wallet_identity = values['wallet_identity']
+    new_block = blockchain.interest(globals()[f'{wallet_identity}'])
+    for node in blockchain.nodes:
+        requests.get('http://' + node + '/consensus')
+    response = {
+        'index': new_block.index,
+        'transactions': new_block.transactions,
+        'timestamp': new_block.timestamp,
+        'nonce': new_block.nonce,
+        'hash': new_block.hash,
+        'previous_hash': new_block.previous_hash
+    }
+    return jsonify(response), 200
+
+executors = {
+    'default': ThreadPoolExecutor(16),
+    'processpool': ProcessPoolExecutor(4)
+}
+def auto_interest_exc():
+    headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+    data = {"wallet_identity": "interest_wallet"}
+    requests.post(f'http://127.0.0.1:{port}/interest', data=json.dumps(data), headers=headers)
+
+sched = BackgroundScheduler(daemon=True)
+sched.add_job(auto_interest_exc,'interval',seconds=10)
 
 if __name__ == '__main__':
     myWallet = Wallet()    # create wallet with $0
-    Wallet_2 = Wallet(300.0)  # e.g. create wallet with $300
+    interest_wallet = Wallet(300.0)  # e.g. create wallet with $300
     Wallet_3 = Wallet(200.0)
     blockchain = Blockchain()
     port = 5000
-    app.run(host='127.0.0.1', port=port, debug=True)
+    sched.start()
+    app.run(host='127.0.0.1', port=port, debug=True, use_reloader=False)
 
