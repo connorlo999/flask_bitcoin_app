@@ -97,13 +97,14 @@ class Wallet:
 
 
 class Block:
-    def __init__(self, index, transactions, timestamp, previous_hash, hash_=0, nonce=0):
+    def __init__(self, index, transactions, timestamp, previous_hash, hash_=0, nonce=0, difficulty=2):
         self.index = index
         self.transactions = transactions
         self.timestamp = timestamp
         self.previous_hash = previous_hash
         self.hash = hash_
         self.nonce = nonce
+        self.difficulty = difficulty
 
     def to_dict(self):
         return {
@@ -111,7 +112,8 @@ class Block:
             'transactions': self.transactions,
             'timestamp': self.timestamp,
             'previous_hash': self.previous_hash,
-            'nonce': self.nonce
+            'nonce': self.nonce,
+            'difficulty': self.difficulty
             }
 
     def to_json(self):
@@ -123,13 +125,35 @@ class Block:
 
 
 class Blockchain:
-    difficulty = 2
+
+    min_diff = 2
+    max_diff = 5
 
     def __init__(self):
         self.unconfirmed_transactions = []
         self.chain = []
         self.create_genesis_block()
         self.nodes = set()
+
+    def difficulty(self, last_block, last_block_2):
+        difficulty = last_block['difficulty']
+
+        if len(self.chain) > 2:
+
+            last_block1_timestamp = last_block['timestamp']
+            last_block2_timestamp = last_block_2['timestamp']
+
+            struct_time_1 = datetime.strptime(last_block1_timestamp, "%m/%d/%y, %H:%M:%S")
+            struct_time_2 = datetime.strptime(last_block2_timestamp, "%m/%d/%y, %H:%M:%S")
+
+            time_diff = struct_time_1 - struct_time_2
+
+            if time_diff.total_seconds() > 30 and difficulty > self.min_diff:
+                difficulty -= 1
+            if time_diff.total_seconds() < 10 and difficulty < self.max_diff:
+                difficulty += 1
+
+        return difficulty
 
     def create_genesis_block(self):
         genesis_block = Block(0, [], datetime.now().strftime("%m/%d/%y, %H:%M:%S"), "0")
@@ -157,12 +181,12 @@ class Blockchain:
         return True
 
     def is_valid_proof(self, block, block_hash):
-        return block_hash.startswith('0' * Blockchain.difficulty) and block_hash == block.compute_hash
+        return block_hash.startswith('0' * block.difficulty) and block_hash == block.compute_hash
 
     def proof_of_work(self, block):
         block.nonce = 0
         computed_hash = block.compute_hash
-        while not computed_hash.startswith('0' * Blockchain.difficulty):
+        while not computed_hash.startswith('0' * block.difficulty):
             block.nonce += 1
             computed_hash = block.compute_hash
         return computed_hash
@@ -177,7 +201,7 @@ class Blockchain:
         new_block = Block(index=self.last_block['index'] + 1, transactions=self.unconfirmed_transactions,
                           timestamp=datetime.now().strftime("%m/%d/%y, %H:%M:%S"),
                           previous_hash=self.last_block['hash'])
-
+        new_block.difficulty = self.difficulty(self.last_block, self.last_block_2)
         proof = self.proof_of_work(new_block)
         if self.add_block(new_block, proof):
             self.unconfirmed_transactions = []
@@ -251,7 +275,8 @@ class Blockchain:
                                   block['timestamp'],
                                   block['previous_hash'],
                                   block['hash'],
-                                  block['nonce'])
+                                  block['nonce'],
+                                  block['difficulty'])
             current_block_hash = str(current_block.hash)
             if hasattr(current_block, 'hash'):
                 delattr(current_block, 'hash')
@@ -279,6 +304,11 @@ class Blockchain:
     @property
     def last_block(self):
         return json.loads(self.chain[-1])
+
+    @property
+    def last_block_2(self):
+        if len(self.chain) > 2:
+            return json.loads(self.chain[-2])
 
 
 @app.route('/<wallet_identity>', methods=['GET'])
@@ -455,7 +485,8 @@ def mine():
         'timestamp': new_block.timestamp,
         'previous_hash': new_block.previous_hash,
         'hash': new_block.hash,
-        'nonce': new_block.nonce
+        'nonce': new_block.nonce,
+        'difficulty': new_block.difficulty
     }
     return jsonify(response), 200
 
@@ -497,23 +528,7 @@ if __name__ == '__main__':
     interest_wallet = Wallet(300.0)  # e.g. create wallet with $300
     Wallet_3 = Wallet(200.0)
     blockchain = Blockchain()
-    port = 5000
+    port = 5002
     host = '127.0.0.1'
     sched.start()
     app.run(host=host, port=port, debug=True, use_reloader=False)
-"""
-input examples
-{
-    "recipient_address":"30819f300d06092a864886f70d010101050003818d0030818902818100bc17ce3baac3ecac7bb8dc91f384dbb5490dca24e2a6f6c5c9b5554582ab3f39ecd5a456074fb59ee0da962f713d3070896adc70a94a8c740b20390b70353e2ddb5abeffeb0e5c912f84eb45b8d3c5e9b5112f44aab1c937f4596f57ea6ef40242c09b2bd51a062f4ec9209a28e2c74019c510f06a0fdc4d5949c4af7f73cebd0203010001",
-    "amount": 8.0,
-    "signature": ""
-}
-
-{
-    "node":"127.0.0.1:5000",
-    "com_port": "" #5001
-}
-/myWallet
-/interest_wallet
-/Wallet_3
-"""
