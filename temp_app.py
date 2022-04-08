@@ -266,9 +266,10 @@ class Blockchain:
                     current_transaction = Transaction(transaction['sender'],
                                                       transaction['recipient'],
                                                       transaction['value'])
-                    current_transaction.signature = transaction['signature']
-                    if not current_transaction.verify_transaction_signature():
-                        return False
+                    if hasattr(current_transaction, 'signature'):
+                        current_transaction.signature = transaction['signature']
+                        if not current_transaction.verify_transaction_signature():
+                            return False
                     hasattr(current_block, 'hash')
                     if not self.is_valid_proof(current_block, current_block_hash):
                         return False
@@ -303,7 +304,7 @@ def new_transaction():
     if not all(k in values for k in required):
         return 'Missing values', 400
 
-    signature = values.get('signature')
+    signature = values['signature']
 
     if signature == "":
         t = Transaction(myWallet.identity, values['recipient_address'], values['amount'])
@@ -500,3 +501,19 @@ if __name__ == '__main__':
     host = '127.0.0.1'
     sched.start()
     app.run(host=host, port=port, debug=True, use_reloader=False)
+"""
+input examples
+{
+    "recipient_address":"30819f300d06092a864886f70d010101050003818d0030818902818100bc17ce3baac3ecac7bb8dc91f384dbb5490dca24e2a6f6c5c9b5554582ab3f39ecd5a456074fb59ee0da962f713d3070896adc70a94a8c740b20390b70353e2ddb5abeffeb0e5c912f84eb45b8d3c5e9b5112f44aab1c937f4596f57ea6ef40242c09b2bd51a062f4ec9209a28e2c74019c510f06a0fdc4d5949c4af7f73cebd0203010001",
+    "amount": 8.0,
+    "signature": ""
+}
+
+{
+    "node":"127.0.0.1:5000",
+    "com_port": "" #5001
+}
+/myWallet
+/interest_wallet
+/Wallet_3
+"""
