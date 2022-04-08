@@ -18,7 +18,7 @@ from urllib.parse import urlparse
 # import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
-
+import random
 
 app = Flask(__name__)
 
@@ -212,8 +212,8 @@ class Blockchain:
     def interest(self, wallet_identity):
         if wallet_identity.balance == 0:
             return False
-        rate = 50
-        interest_earn = wallet_identity.balance*(1+rate/100-1)
+        rate = 5
+        interest_earn = round(wallet_identity.balance*(1+rate/100-1),2)
 
         interest_trans = Transaction("Interest", wallet_identity.identity, str(interest_earn)).to_json()
         self.unconfirmed_transactions.insert(0, interest_trans)
@@ -224,6 +224,7 @@ class Blockchain:
         new_block = Block(index=self.last_block['index'] + 1, transactions=self.unconfirmed_transactions,
                           timestamp=datetime.now().strftime("%m/%d/%y, %H:%M:%S"),
                           previous_hash=self.last_block['hash'])
+        new_block.difficulty = self.difficulty(self.last_block, self.last_block_2)
         proof = self.proof_of_work(new_block)
         if self.add_block(new_block, proof):
             self.unconfirmed_transactions = []
@@ -410,38 +411,37 @@ def get_nodes():
 @app.route('/register_node', methods=['POST'])
 def register_node():
 
-    values = request.get_json()
-    node = values.get('node')
-    com_port = values.get('com_port')
+    values = request.json
 
-    if com_port != "":
-        blockchain.register_node(request.remote_addr + ":" + com_port)
-        return "ok", 200
-    if com_port != "" and node != "":
-        return "Error: Please supply a valid list of nodes", 400
+    required = ['node', 'com_port']
 
-    if node != "":
-        node_list_self = requests.get('http://' + host + ":" + str(port) + '/get_nodes')
-        if node_list_self.status_code == 200:
-            node_list = node_list_self.json()['nodes']
-            for node_self in node_list:
-                if node_self == node:
-                    response = {
-                        'message': 'This port is already added!',
-                        'total_nodes': [node for node in blockchain.nodes]
-                    }
-                    return jsonify(response), 400
+    if (values['node'] == "" and values['com_port'] == "") or values['node'] == "" or values['com_port'] == str(port):
+        return 'Input invalid', 400
 
-        blockchain.register_node(node)
-        node_list = requests.get('http://' + node + '/get_nodes')
-        if node_list.status_code == 200:
-            node_list = node_list.json()['nodes']
-            for node in node_list:
-                blockchain.register_node(node)
-                requests.post('http://' + node + '/register_node',
-                              json={'node': "", 'com_port': str(port)})
-        requests.post('http://' + node + '/register_node',
-                      json={'node': "", 'com_port': str(port)})
+    new_address = f'{values["node"]}:{values["com_port"]}'
+    if new_address in blockchain.nodes:
+        return 'Node Added', 200
+
+    r = requests.get(f'http://{new_address}/get_nodes')
+
+    if r.status_code != 200:
+        response = {
+            'message': 'Something went wrong',
+        }
+        return jsonify(response), 400
+
+    else:
+        node_list = r.json()["nodes"]
+        blockchain.register_node(f'http://{new_address}')
+        data = {"node": str(host), "com_port": str(port)}
+        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+        requests.post(f'http://{new_address}/register_node', data=json.dumps(data), headers=headers)
+
+        for node in node_list:
+            if not(node in blockchain.nodes) and node != f'127.0.0.1:{port}':
+                data = {"node": str(host), "com_port": str(port)}
+                headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+                requests.post(f'http://{node}/register_node', data=json.dumps(data), headers=headers)
 
     replaced = blockchain.consensus()
 
@@ -497,15 +497,22 @@ def interest():
     new_block = blockchain.interest(globals()[f'{wallet_identity}'])
     for node in blockchain.nodes:
         requests.get('http://' + node + '/consensus')
-    response = {
-        'index': new_block.index,
-        'transactions': new_block.transactions,
-        'timestamp': new_block.timestamp,
-        'nonce': new_block.nonce,
-        'hash': new_block.hash,
-        'previous_hash': new_block.previous_hash
-    }
-    return jsonify(response), 200
+    if new_block:
+        response = {
+            'index': new_block.index,
+            'transactions': new_block.transactions,
+            'timestamp': new_block.timestamp,
+            'previous_hash': new_block.previous_hash,
+            'hash': new_block.hash,
+            'nonce': new_block.nonce,
+            'difficulty': new_block.difficulty
+        }
+        return jsonify(response), 200
+    else:
+        response = {
+            'message': 'No interest!'
+        }
+        return jsonify(response), 200
 
 
 executors = {
@@ -517,18 +524,18 @@ executors = {
 def auto_interest_exc():
     headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
     data = {"wallet_identity": "interest_wallet"}
-    requests.post(f'http://127.0.0.1:{port}/interest', data=json.dumps(data), headers=headers)
+    requests.post(f'http://{host}:{port}/interest', data=json.dumps(data), headers=headers)
 
 
-sched = BackgroundScheduler(daemon=True)
-sched.add_job(auto_interest_exc, 'interval', seconds=10)
+sched = BackgroundScheduler(daemon=True, job_defaults={'max_instances': 2})
+sched.add_job(auto_interest_exc, 'interval', seconds=random.randint(28, 32))
 
 if __name__ == '__main__':
     myWallet = Wallet()    # create wallet with $0
     interest_wallet = Wallet(300.0)  # e.g. create wallet with $300
     Wallet_3 = Wallet(200.0)
     blockchain = Blockchain()
-    port = 5002
+    port = 5000
     host = '127.0.0.1'
     sched.start()
     app.run(host=host, port=port, debug=True, use_reloader=False)
