@@ -156,7 +156,7 @@ class Blockchain:
         return difficulty
 
     def mine_reward(self):
-        return self.difficulty(self.last_block, self.last_block_2) * 2
+        return self.difficulty(self.last_block, self.last_block_2) * 3
 
     def create_genesis_block(self):
         genesis_block = Block(0, [], datetime.now().strftime("%m/%d/%y, %H:%M:%S"), "0")
@@ -434,12 +434,12 @@ def register_node():
 
     values = request.json
 
-    required = ['node', 'com_port']
+    required = ['host', 'port']
 
-    if (values['node'] == "" and values['com_port'] == "") or values['node'] == "" or values['com_port'] == str(port):
+    if (values['host'] == "" and values['port'] == "") or values['host'] == "" or values['port'] == str(port):
         return 'Input invalid', 400
 
-    new_address = f'{values["node"]}:{values["com_port"]}'
+    new_address = f'{values["host"]}:{values["port"]}'
     if new_address in blockchain.nodes:
         return 'Node Added', 200
 
@@ -447,20 +447,20 @@ def register_node():
 
     if r.status_code != 200:
         response = {
-            'message': 'Something went wrong',
+            'message': 'Cannot get nodes through HTTP.',
         }
         return jsonify(response), 400
 
     else:
         node_list = r.json()["nodes"]
         blockchain.register_node(f'http://{new_address}')
-        data = {"node": str(host), "com_port": str(port)}
+        data = {"host": str(host), "port": str(port)}
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
         requests.post(f'http://{new_address}/register_node', data=json.dumps(data), headers=headers)
 
         for node in node_list:
             if not(node in blockchain.nodes) and node != f'127.0.0.1:{port}':
-                data = {"node": str(host), "com_port": str(port)}
+                data = {"host": str(host), "port": str(port)}
                 headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
                 requests.post(f'http://{node}/register_node', data=json.dumps(data), headers=headers)
 
