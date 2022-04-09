@@ -63,7 +63,8 @@ class Wallet:
         self._private_key = RSA.generate(1024, random)
         self._public_key = self._private_key.publickey()
         self._balance = deposit
-        self.all_transactions = []
+        self.my_address = []
+        self.my_transactions = []
 
     def sign_transaction(self, transaction: Transaction):
         signer = PKCS1_v1_5.new(self._private_key)
@@ -166,8 +167,8 @@ class Blockchain:
 
     def add_new_transaction(self, transaction: Transaction, wallet_identity):
         verify_transaction_record = True
-        if len(wallet_identity.all_transactions) != 0:
-            last_transaction = json.loads(wallet_identity.all_transactions[-1])
+        if len(wallet_identity.my_transactions) != 0:
+            last_transaction = json.loads(wallet_identity.my_transactions[-1])
 
             if last_transaction['sender'] == transaction.sender or last_transaction['recipient'] == transaction.recipient \
                     or last_transaction['signature'] == transaction.signature:
@@ -175,7 +176,7 @@ class Blockchain:
 
         if transaction.verify_transaction_signature() and verify_transaction_record:
             self.unconfirmed_transactions.append(transaction.to_json())
-            wallet_identity.all_transactions.append(transaction.to_json())
+            wallet_identity.my_transactions.append(transaction.to_json())
             return True
         else:
             return False
@@ -398,7 +399,7 @@ def new_transaction(wallet_identity):
 @app.route('/<wallet_identity>/get_transactions', methods=['GET'])
 def get_transactions(wallet_identity):
     transactions = blockchain.unconfirmed_transactions
-    my_transactions = globals()[f'{wallet_identity}'].all_transactions
+    my_transactions = globals()[f'{wallet_identity}'].my_transactions
     response = {'unconfirmed transactions': transactions,
                 'my transactions record': my_transactions}
     return jsonify(response), 200
