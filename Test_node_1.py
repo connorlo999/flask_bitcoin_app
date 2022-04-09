@@ -517,9 +517,10 @@ def get_nodes():
 @app.route('/register_node', methods=['POST'])
 def register_node():
 
-    values = request.json
+    #values = request.json
+    values = json.loads(json.dumps(request.form)) # get input from  Register_node.html
 
-    required = ['node', 'com_port']
+    required = ['node', 'com_port'] #Please don't change the name
 
     if (values['node'] == "" and values['com_port'] == "") or values['node'] == "" or values['com_port'] == str(port):
         return 'Input invalid', 400
