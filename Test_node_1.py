@@ -155,6 +155,9 @@ class Blockchain:
 
         return difficulty
 
+    def mine_reward(self):
+        return self.difficulty(self.last_block, self.last_block_2) * 3
+
     def create_genesis_block(self):
         genesis_block = Block(0, [], datetime.now().strftime("%m/%d/%y, %H:%M:%S"), "0")
         genesis_block.hash = genesis_block.compute_hash
@@ -191,24 +194,32 @@ class Blockchain:
             computed_hash = block.compute_hash
         return computed_hash
 
-    def mine(self, myWallet):
-        block_reward = Transaction("Block_Reward", myWallet.identity, "5.0").to_json()
+    def mine(self, wallet_identity):
+        mine_reward = self.mine_reward()
+        block_reward = Transaction("Block_Reward", wallet_identity.identity, str(mine_reward)).to_json()
         self.unconfirmed_transactions.insert(0, block_reward)
 
         if not self.unconfirmed_transactions:
             return False
 
-        new_block = Block(index=self.last_block['index'] + 1, transactions=self.unconfirmed_transactions,
-                          timestamp=datetime.now().strftime("%m/%d/%y, %H:%M:%S"),
-                          previous_hash=self.last_block['hash'])
-        new_block.difficulty = self.difficulty(self.last_block, self.last_block_2)
-        proof = self.proof_of_work(new_block)
-        if self.add_block(new_block, proof):
-            self.unconfirmed_transactions = []
-            myWallet.deposit(5.0)
-            return new_block
-        else:
-            return False
+        added = False
+        start_time = time.time()
+        end_time = time.time()
+        while not (added or ((end_time-start_time) > 10) ):
+            for node in self.nodes:
+                requests.get('http://' + node + '/consensus')
+            new_block = Block(index=self.last_block['index'] + 1, transactions=self.unconfirmed_transactions,
+                              timestamp=datetime.now().strftime("%m/%d/%y, %H:%M:%S"),
+                              previous_hash=self.last_block['hash'])
+            new_block.difficulty = self.difficulty(self.last_block, self.last_block_2)
+            proof = self.proof_of_work(new_block)
+            if self.add_block(new_block, proof):
+                self.unconfirmed_transactions = []
+                wallet_identity.deposit(mine_reward)
+                added = True
+            end = time.time()
+        return new_block
+
 
     def interest(self, wallet_identity):
         if wallet_identity.balance == 0:
@@ -223,7 +234,9 @@ class Blockchain:
             return False
 
         added = False
-        while not (added):
+        start_time = time.time()
+        end_time = time.time()
+        while not (added or ((end_time-start_time) > 10) ):
             for node in self.nodes:
                 requests.get('http://' + node + '/consensus')
             new_block = Block(index=self.last_block['index'] + 1, transactions=self.unconfirmed_transactions,
@@ -236,12 +249,9 @@ class Blockchain:
                 self.unconfirmed_transactions = []
                 wallet_identity.deposit(interest_earn)
                 added = True
-            time.sleep(0.1)
+            end = time.time()
 
         return new_block
-
-        """else:
-            return False"""
 
     def register_node(self, node_url):
 
@@ -323,7 +333,7 @@ class Blockchain:
             return json.loads(self.chain[-2])
 
 
-@app.route('/<wallet_identity>', methods=['GET'])
+@app.route('/wallet/<wallet_identity>', methods=['GET'])
 def wallet_identity(wallet_identity):
 
     pub_key = json.dumps(globals()[f'{wallet_identity}'].identity, cls=json_format)
@@ -424,12 +434,12 @@ def register_node():
 
     values = request.json
 
-    required = ['node', 'com_port']
+    required = ['host', 'port']
 
-    if (values['node'] == "" and values['com_port'] == "") or values['node'] == "" or values['com_port'] == str(port):
+    if (values['host'] == "" and values['port'] == "") or values['host'] == "" or values['port'] == str(port):
         return 'Input invalid', 400
 
-    new_address = f'{values["node"]}:{values["com_port"]}'
+    new_address = f'{values["host"]}:{values["port"]}'
     if new_address in blockchain.nodes:
         return 'Node Added', 200
 
@@ -437,20 +447,20 @@ def register_node():
 
     if r.status_code != 200:
         response = {
-            'message': 'Something went wrong',
+            'message': 'Cannot get nodes through HTTP.',
         }
         return jsonify(response), 400
 
     else:
         node_list = r.json()["nodes"]
         blockchain.register_node(f'http://{new_address}')
-        data = {"node": str(host), "com_port": str(port)}
+        data = {"host": str(host), "port": str(port)}
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
         requests.post(f'http://{new_address}/register_node', data=json.dumps(data), headers=headers)
 
         for node in node_list:
             if not(node in blockchain.nodes) and node != f'127.0.0.1:{port}':
-                data = {"node": str(host), "com_port": str(port)}
+                data = {"host": str(host), "port": str(port)}
                 headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
                 requests.post(f'http://{node}/register_node', data=json.dumps(data), headers=headers)
 
