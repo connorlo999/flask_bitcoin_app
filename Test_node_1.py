@@ -429,6 +429,7 @@ def new_transaction():
         #transfer_result = t.deposite_amount_recipient(recipient, total_amount)
 
         if transaction_result:
+            requests.get(f'http://{host}:{port}/mine')
             transfer_result = t.deposite_amount_recipient(recipient, total_amount)
             if not transfer_result:
                 myWallet.payment(0.5)
@@ -439,7 +440,7 @@ def new_transaction():
 
             else:
                 myWallet.payment(transaction_fee)
-                response = {'message': 'Transaction is successful. It will be added to the chain'}
+                response = {'message': 'Transaction is successful. Block added to chain.'}
                 return jsonify(response), 201
 
         else:
