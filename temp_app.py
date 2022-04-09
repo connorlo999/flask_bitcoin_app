@@ -63,6 +63,7 @@ class Wallet:
         self._private_key = RSA.generate(1024, random)
         self._public_key = self._private_key.publickey()
         self._balance = deposit
+        self.all_transactions = []
 
     def sign_transaction(self, transaction: Transaction):
         signer = PKCS1_v1_5.new(self._private_key)
@@ -163,9 +164,18 @@ class Blockchain:
         genesis_block.hash = genesis_block.compute_hash
         self.chain.append(genesis_block.to_json())
 
-    def add_new_transaction(self, transaction: Transaction):
-        if transaction.verify_transaction_signature():
+    def add_new_transaction(self, transaction: Transaction, wallet_identity):
+        verify_transaction_record = True
+        if len(wallet_identity.all_transactions) != 0:
+            last_transaction = json.loads(wallet_identity.all_transactions[-1])
+
+            if last_transaction['sender'] == transaction.sender or last_transaction['recipient'] == transaction.recipient \
+                    or last_transaction['signature'] == transaction.signature:
+                verify_transaction_record = False
+
+        if transaction.verify_transaction_signature() and verify_transaction_record:
             self.unconfirmed_transactions.append(transaction.to_json())
+            wallet_identity.all_transactions.append(transaction.to_json())
             return True
         else:
             return False
@@ -203,7 +213,8 @@ class Blockchain:
             return False
 
         added = False
-        while not (added):
+        #start_time = time.time()
+        while not (added): #or ((end_time-start_time) > 10)
             for node in self.nodes:
                 requests.get('http://' + node + '/consensus')
             new_block = Block(index=self.last_block['index'] + 1, transactions=self.unconfirmed_transactions,
@@ -215,7 +226,7 @@ class Blockchain:
                 self.unconfirmed_transactions = []
                 wallet_identity.deposit(mine_reward)
                 added = True
-            time.sleep(0.1)
+            #end_time = time.time()
 
         return new_block
 
@@ -233,7 +244,9 @@ class Blockchain:
             return False
 
         added = False
-        while not (added):
+        #start_time = time.time()
+
+        while not (added): #or ((end_time-start_time) > 10)
             for node in self.nodes:
                 requests.get('http://' + node + '/consensus')
             new_block = Block(index=self.last_block['index'] + 1, transactions=self.unconfirmed_transactions,
@@ -246,15 +259,11 @@ class Blockchain:
                 self.unconfirmed_transactions = []
                 wallet_identity.deposit(interest_earn)
                 added = True
-            time.sleep(0.1)
+            #end_time = time.time()
 
         return new_block
 
-        """else:
-            return False"""
-
     def register_node(self, node_url):
-
         parsed_url = urlparse(node_url)
         if parsed_url.netloc:
             self.nodes.add(parsed_url.netloc)
@@ -264,7 +273,6 @@ class Blockchain:
             raise ValueError('Invalid URL')
 
     def consensus(self):
-
         neighbours = self.nodes
         new_chain = None
 
@@ -333,9 +341,8 @@ class Blockchain:
             return json.loads(self.chain[-2])
 
 
-@app.route('/<wallet_identity>', methods=['GET'])
+@app.route('/<wallet_identity>/wallet', methods=['GET'])
 def wallet_identity(wallet_identity):
-
     pub_key = json.dumps(globals()[f'{wallet_identity}'].identity, cls=json_format)
     pri_key = json.dumps(globals()[f'{wallet_identity}'].private, cls=json_format)
     balance = json.dumps(globals()[f'{wallet_identity}'].balance, cls=json_format)
@@ -348,8 +355,8 @@ def wallet_identity(wallet_identity):
     return jsonify(response), 200
 
 
-@app.route('/new_transaction', methods=['POST'])
-def new_transaction():
+@app.route('/<wallet_identity>/new_transaction', methods=['POST'])
+def new_transaction(wallet_identity):
     values = request.get_json()
 
     required = ['recipient_address', 'amount']
@@ -357,46 +364,48 @@ def new_transaction():
         return 'Missing values', 400
 
     signature = values['signature']
+    t = Transaction(globals()[f'{wallet_identity}'].identity, values['recipient_address'], values['amount'])
 
     if signature == "":
-        t = Transaction(myWallet.identity, values['recipient_address'], values['amount'])
-        signature = myWallet.sign_transaction(t)
+        signature = globals()[f'{wallet_identity}'].sign_transaction(t)
         response = {'message': 'Please include this signature in your transaction.',
                     'signature': signature}
         return jsonify(response), 201
 
     transaction_fee = values['amount'] + 0.5
 
-    if myWallet.check_balance(transaction_fee):
-        t = Transaction(myWallet.identity, values['recipient_address'], values['amount'])
+    if globals()[f'{wallet_identity}'].check_balance(transaction_fee):
+        t = Transaction(globals()[f'{wallet_identity}'].identity, values['recipient_address'], values['amount'])
         t.add_signature(signature)
-        transaction_result = blockchain.add_new_transaction(t)
+        transaction_result = blockchain.add_new_transaction(t, globals()[f'{wallet_identity}'])
 
         if transaction_result:
-            myWallet.payment(transaction_fee)
+            globals()[f'{wallet_identity}'].payment(transaction_fee)
             response = {'message': 'Transaction will be added to the block'}
             return jsonify(response), 201
         else:
-            myWallet.payment(0.5)
-            response = {'message': 'Invalid Transaction! There is a cost of the network gas fee.'}
+            globals()[f'{wallet_identity}'].payment(0.5)
+            response = {'message': 'Invalid Transaction! There is a cost of the network gas fee.',
+                        'warning': 'If you wish to transfer it again, please create a new transaction.'}
             return jsonify(response), 406
 
     else:
         response = {'message': 'Please check your balance!',
-                    'Reminder': '0.5 is for transaction fee'}
+                    'reminder': '0.5 is for transaction fee'}
         return jsonify(response), 406
 
 
-@app.route('/get_transactions', methods=['GET'])
-def get_transactions():
+@app.route('/<wallet_identity>/get_transactions', methods=['GET'])
+def get_transactions(wallet_identity):
     transactions = blockchain.unconfirmed_transactions
-    response = {'transactions': transactions}
+    my_transactions = globals()[f'{wallet_identity}'].all_transactions
+    response = {'unconfirmed transactions': transactions,
+                'my transactions record': my_transactions}
     return jsonify(response), 200
 
 
 @app.route('/chain', methods=['GET'])
 def last_ten_blocks():
-
     response = {
         'chain': blockchain.chain[-10:],
         'length': len(blockchain.chain)
@@ -495,9 +504,9 @@ def consensus():
     return jsonify(response), 200
 
 
-@app.route('/mine', methods=['GET'])
-def mine():
-    new_block = blockchain.mine(myWallet)
+@app.route('/<wallet_identity>/mine', methods=['GET'])
+def mine(wallet_identity):
+    new_block = blockchain.mine(globals()[f'{wallet_identity}'])
     for node in blockchain.nodes:
         requests.get('http://' + node + '/consensus')
     response = {
@@ -556,7 +565,7 @@ if __name__ == '__main__':
     interest_wallet = Wallet(300.0)  # e.g. create wallet with $300
     Wallet_3 = Wallet(200.0)
     blockchain = Blockchain()
-    port = 5001
+    port = 5000
     host = '127.0.0.1'
     sched.start()
     app.run(host=host, port=port, debug=True, use_reloader=False)
