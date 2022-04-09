@@ -14,7 +14,7 @@ from urllib.parse import urlparse
 # from json2html import *
 
 
-# import time
+import time
 # import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
@@ -155,6 +155,9 @@ class Blockchain:
 
         return difficulty
 
+    def mine_reward(self):
+        return self.difficulty(self.last_block, self.last_block_2) * 2
+
     def create_genesis_block(self):
         genesis_block = Block(0, [], datetime.now().strftime("%m/%d/%y, %H:%M:%S"), "0")
         genesis_block.hash = genesis_block.compute_hash
@@ -173,12 +176,12 @@ class Blockchain:
         if previous_hash != block.previous_hash:
             return False
 
-        if not self.is_valid_proof(block, proof):
+        elif not self.is_valid_proof(block, proof):
             return False
-
-        block.hash = proof
-        self.chain.append(block.to_json())
-        return True
+        else:
+            block.hash = proof
+            self.chain.append(block.to_json())
+            return True
 
     def is_valid_proof(self, block, block_hash):
         return block_hash.startswith('0' * block.difficulty) and block_hash == block.compute_hash
@@ -191,23 +194,31 @@ class Blockchain:
             computed_hash = block.compute_hash
         return computed_hash
 
-    def mine(self, myWallet):
-        block_reward = Transaction("Block_Reward", myWallet.identity, "5.0").to_json()
+    def mine(self, wallet_identity):
+        mine_reward = self.mine_reward()
+        block_reward = Transaction("Block_Reward", wallet_identity.identity, str(mine_reward)).to_json()
         self.unconfirmed_transactions.insert(0, block_reward)
-        myWallet.deposit(5.0)
+
         if not self.unconfirmed_transactions:
             return False
 
-        new_block = Block(index=self.last_block['index'] + 1, transactions=self.unconfirmed_transactions,
-                          timestamp=datetime.now().strftime("%m/%d/%y, %H:%M:%S"),
-                          previous_hash=self.last_block['hash'])
-        new_block.difficulty = self.difficulty(self.last_block, self.last_block_2)
-        proof = self.proof_of_work(new_block)
-        if self.add_block(new_block, proof):
-            self.unconfirmed_transactions = []
-            return new_block
-        else:
-            return False
+        added = False
+        while not (added):
+            for node in self.nodes:
+                requests.get('http://' + node + '/consensus')
+            new_block = Block(index=self.last_block['index'] + 1, transactions=self.unconfirmed_transactions,
+                              timestamp=datetime.now().strftime("%m/%d/%y, %H:%M:%S"),
+                              previous_hash=self.last_block['hash'])
+            new_block.difficulty = self.difficulty(self.last_block, self.last_block_2)
+            proof = self.proof_of_work(new_block)
+            if self.add_block(new_block, proof):
+                self.unconfirmed_transactions = []
+                wallet_identity.deposit(mine_reward)
+                added = True
+            time.sleep(0.1)
+
+        return new_block
+
 
     def interest(self, wallet_identity):
         if wallet_identity.balance == 0:
@@ -217,20 +228,30 @@ class Blockchain:
 
         interest_trans = Transaction("Interest", wallet_identity.identity, str(interest_earn)).to_json()
         self.unconfirmed_transactions.insert(0, interest_trans)
-        wallet_identity.deposit(interest_earn)
+
         if not self.unconfirmed_transactions:
             return False
 
-        new_block = Block(index=self.last_block['index'] + 1, transactions=self.unconfirmed_transactions,
-                          timestamp=datetime.now().strftime("%m/%d/%y, %H:%M:%S"),
-                          previous_hash=self.last_block['hash'])
-        new_block.difficulty = self.difficulty(self.last_block, self.last_block_2)
-        proof = self.proof_of_work(new_block)
-        if self.add_block(new_block, proof):
-            self.unconfirmed_transactions = []
-            return new_block
-        else:
-            return False
+        added = False
+        while not (added):
+            for node in self.nodes:
+                requests.get('http://' + node + '/consensus')
+            new_block = Block(index=self.last_block['index'] + 1, transactions=self.unconfirmed_transactions,
+                              timestamp=datetime.now().strftime("%m/%d/%y, %H:%M:%S"),
+                              previous_hash=self.last_block['hash'])
+            new_block.difficulty = self.difficulty(self.last_block, self.last_block_2)
+            proof = self.proof_of_work(new_block)
+
+            if self.add_block(new_block, proof):
+                self.unconfirmed_transactions = []
+                wallet_identity.deposit(interest_earn)
+                added = True
+            time.sleep(0.1)
+
+        return new_block
+
+        """else:
+            return False"""
 
     def register_node(self, node_url):
 
@@ -512,7 +533,7 @@ def interest():
         response = {
             'message': 'No interest!'
         }
-        return jsonify(response), 200
+        return jsonify(response), 408
 
 
 executors = {
@@ -528,14 +549,14 @@ def auto_interest_exc():
 
 
 sched = BackgroundScheduler(daemon=True, job_defaults={'max_instances': 2})
-sched.add_job(auto_interest_exc, 'interval', seconds=random.randint(28, 32))
+sched.add_job(auto_interest_exc, 'interval', seconds=60)
 
 if __name__ == '__main__':
     myWallet = Wallet()    # create wallet with $0
     interest_wallet = Wallet(300.0)  # e.g. create wallet with $300
     Wallet_3 = Wallet(200.0)
     blockchain = Blockchain()
-    port = 5000
+    port = 5001
     host = '127.0.0.1'
     sched.start()
     app.run(host=host, port=port, debug=True, use_reloader=False)
