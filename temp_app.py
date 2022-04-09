@@ -9,9 +9,9 @@ from json import JSONEncoder
 import binascii
 import json
 import requests
-from flask import Flask, jsonify, request, g, render_template_string
+from flask import Flask, jsonify, request, g, render_template_string, render_template
 from urllib.parse import urlparse
-# from json2html import *
+from json2html import *
 
 
 import time
@@ -363,6 +363,9 @@ class Blockchain:
         if len(self.chain) > 2:
             return json.loads(self.chain[-2])
 
+@app.route('/')
+def form():
+    return render_template('Register_node.html')
 
 @app.route('/<wallet_identity>/wallet', methods=['GET', 'POST'])
 def wallet_identity(wallet_identity):
@@ -459,6 +462,18 @@ def last_ten_blocks():
     }
     return jsonify(response), 200
 
+@app.route('/chain_v', methods=['GET'])
+def last_ten_blocks_visualize():
+    # temporary measure for visualization, see if there is any better way
+    length = len(blockchain.chain)
+    html_data = "<h1>Chain Length: " + str(length) + "</h1>"
+    for item in blockchain.chain[-10:]:
+        item = json.loads(item)
+        if item['transactions']: # not empty
+            item['transactions'] = json.loads(item['transactions'][0])
+        html_data += json2html.convert(json=item)
+        html_data += '<br><br>'
+    return render_template_string(html_data)
 
 @app.route('/full_chain', methods=['GET'])
 def full_chain():
@@ -468,12 +483,18 @@ def full_chain():
     }
     return jsonify(response), 200
 
+@app.route('/full_chain_v', methods=['GET'])
+def full_chain_visualize():
     # temporary measure for visualization, see if there is any better way
-    # html_data = ''
-    # for item in blockchain.chain:
-    #    html_data += json2html.convert(json=item)
-    #    html_data += '<br><br>'
-    # return render_template_string(html_data)
+    length = len(blockchain.chain)
+    html_data = "<h1>Chain Length: " + str(length) + "</h1>"
+    for item in blockchain.chain:
+        item = json.loads(item)
+        if item['transactions']: # not empty
+            item['transactions'] = json.loads(item['transactions'][0])
+        html_data += json2html.convert(json=item)
+        html_data += '<br><br>'
+    return render_template_string(html_data)
 
 
 @app.route('/get_nodes', methods=['GET'])
@@ -485,7 +506,9 @@ def get_nodes():
 
 @app.route('/register_node', methods=['POST'])
 def register_node():
-    values = request.json
+
+    #values = request.json
+    values = json.loads(json.dumps(request.form)) # get input from  Register_node.html
 
     required = ['host', 'port']
 
