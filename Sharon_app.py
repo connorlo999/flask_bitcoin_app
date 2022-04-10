@@ -9,9 +9,10 @@ from json import JSONEncoder
 import binascii
 import json
 import requests
-from flask import Flask, jsonify, request, g, render_template_string
+from flask import Flask, jsonify, request, render_template, render_template_string
 from urllib.parse import urlparse
-# from json2html import *
+from json2html import *
+from flask_cors import CORS
 
 
 import time
@@ -21,6 +22,10 @@ from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
 import random
 
 app = Flask(__name__)
+app.config.from_object(__name__)
+# enable CORS
+CORS(app, resources={r'/*': {'origins': '*'}})
+port = 5000
 
 
 class json_format(JSONEncoder):
@@ -365,6 +370,11 @@ class Blockchain:
             return json.loads(self.chain[-2])
 
 
+@app.route('/')
+def form():
+    return render_template('index.html',port = port)
+
+
 @app.route('/<wallet_identity>/wallet', methods=['GET', 'POST'])
 def wallet_identity(wallet_identity):
     if request.method == 'POST':
@@ -431,7 +441,7 @@ def new_transaction():
 
     else:
         response = {'message': 'Please check your balance!',
-                    'Reminder': '0.5 is for transaction fee'}
+                    'reminder': '0.5 is for transaction fee'}
         return jsonify(response), 406
 
 
@@ -440,8 +450,22 @@ def get_transactions():
     transactions = blockchain.unconfirmed_transactions
     my_transactions = myWallet.all_transactions
     response = {'transactions': transactions,
-                'my transactions record': my_transactions}
+                'my_transactions_record': my_transactions}
     return jsonify(response), 200
+
+
+@app.route('/chain_v', methods=['GET'])
+def last_ten_blocks_visualize():
+    # temporary measure for visualization, see if there is any better way
+    length = len(blockchain.chain)
+    html_data = "<h1>Chain Length: " + str(length) + "</h1>"
+    for item in blockchain.chain[-10:]:
+        item = json.loads(item)
+        if item['transactions']: # not empty
+            item['transactions'] = json.loads(item['transactions'][0])
+        html_data += json2html.convert(json=item)
+        html_data += '<br><br>'
+    return render_template_string(html_data)
 
 
 @app.route('/chain', methods=['GET'])
@@ -461,12 +485,19 @@ def full_chain():
     }
     return jsonify(response), 200
 
+
+@app.route('/full_chain_v', methods=['GET'])
+def full_chain_visualize():
     # temporary measure for visualization, see if there is any better way
-    # html_data = ''
-    # for item in blockchain.chain:
-    #    html_data += json2html.convert(json=item)
-    #    html_data += '<br><br>'
-    # return render_template_string(html_data)
+    length = len(blockchain.chain)
+    html_data = "<h1>Chain Length: " + str(length) + "</h1>"
+    for item in blockchain.chain:
+        item = json.loads(item)
+        if item['transactions']: # not empty
+            item['transactions'] = json.loads(item['transactions'][0])
+        html_data += json2html.convert(json=item)
+        html_data += '<br><br>'
+    return render_template_string(html_data)
 
 
 @app.route('/get_nodes', methods=['GET'])
@@ -593,7 +624,7 @@ executors = {
 
 def auto_interest_exc():
     headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-    data = {"wallet_identity": "interest_wallet"}
+    data = {"wallet_identity": "myWallet"}
     requests.post(f'http://{host}:{port}/interest', data=json.dumps(data), headers=headers)
 
 
