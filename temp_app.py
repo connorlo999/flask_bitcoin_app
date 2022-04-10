@@ -12,6 +12,7 @@ import requests
 from flask import Flask, jsonify, request, g, render_template_string, render_template
 from urllib.parse import urlparse
 from json2html import *
+from flask_cors import CORS
 
 
 import time
@@ -21,7 +22,12 @@ from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
 import random
 
 app = Flask(__name__)
+app.config.from_object(__name__)
 
+# enable CORS
+CORS(app, resources={r'/*': {'origins': '*'}})
+
+port = 5000;
 
 class json_format(JSONEncoder):
     def obj_to_json(self):
@@ -365,17 +371,17 @@ class Blockchain:
 
 @app.route('/')
 def form():
-    return render_template('Register_node.html')
+    return render_template('index.html',port = port)
 
 @app.route('/<wallet_identity>/wallet', methods=['GET', 'POST'])
 def wallet_identity(wallet_identity):
     if request.method == 'POST':
-        required = ['Amount']
+        required = ['amount']
         values = request.get_json()
         if not all(k in values for k in required):
             return 400
 
-        amount = float(values['Amount'])
+        amount = float(values['amount'])
         wallet_temp = Wallet(amount)
         myWallet.deposit(wallet_temp.balance)
         response = {
@@ -388,9 +394,9 @@ def wallet_identity(wallet_identity):
         balance = json.dumps(globals()[f'{wallet_identity}'].balance, cls=json_format)
 
         response = {
-            'Public key': pub_key,
-            'Private key': pri_key,
-            'Balance': balance
+            'public_key': pub_key,
+            'private_key': pri_key,
+            'balance': balance
         }
         return jsonify(response), 200
 
@@ -441,7 +447,7 @@ def new_transaction():
 
     else:
         response = {'message': 'Please check your balance!',
-                    'Reminder': '0.5 is for transaction fee'}
+                    'reminder': '0.5 is for transaction fee'}
         return jsonify(response), 406
 
 
@@ -450,7 +456,7 @@ def get_transactions():
     transactions = blockchain.unconfirmed_transactions
     my_transactions = myWallet.all_transactions
     response = {'transactions': transactions,
-                'my transactions record': my_transactions}
+                'my_transactions_record': my_transactions}
     return jsonify(response), 200
 
 
@@ -621,7 +627,7 @@ executors = {
 
 def auto_interest_exc():
     headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-    data = {"wallet_identity": "interest_wallet"}
+    data = {"wallet_identity": "myWallet"}
     requests.post(f'http://{host}:{port}/interest', data=json.dumps(data), headers=headers)
 
 
