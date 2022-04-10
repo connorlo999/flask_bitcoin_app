@@ -24,7 +24,7 @@
                     <li class="tab col s3"><a href="#test1">Add node</a></li>
                     <li class="tab col s3"><a class="active" href="#test2">Wallet</a></li>
                     <li class="tab col s3 "><a href="#test3">Transactions</a></li>
-                    <li class="tab col s3"><a href="#test4">Mine/View Chain</a></li>
+                    <li class="tab col s3"><a href="#test4">Mine/View</a></li>
                   </ul>
                 </div>
                 <div id="test1" class="col s12">
@@ -52,26 +52,26 @@
                 </div>
                 </div>
                 
-                <div id="test2" class="col s12"><div class="row">
-                    <form class="col s12">
-                    <h6>Make New Transactions</h6>
-                      <div class="row">
-                        <div class="input-field col s12">
-                          <input id="recipient_address" type="text" class="validate">
-                          <label for="recipient_address">Recipient address</label>
+                <div id="test2" class="col s12">
+                    <div class="row">
+                        <form class="col s12"><!--todo-->
+                        <h6>Wallet</h6>
+                          <div class="row">
+                            <!-- <div class="input-field col s12">
+                              <input id="add_wallet_amount" type="number" class="validate">
+                              <label for="add_wallet_amount">Amount</label>
+                            </div>
+                          </div>
+                          <a id="topup_wallet" class="waves-effect waves-light btn">Add Balance To Wallet</a> -->
+                          <a id="check_wallet" class="waves-effect waves-light btn">Check Wallet Balance</a>
+                        </form>
+                        <div id="add_wallet_amount_message"></div>
+                        <div class="col s12">
+                            <table id="wallet_table"><thead><tr><th>Wallet:</th></tr></thead>
+                            </table>
                         </div>
-                      </div>
-                      <div class="row">
-                        <div class="input-field col s12">
-                          <input id="amount" type="number" class="validate">
-                          <label for="amount">Amount</label>
-                        </div>
-                      </div>
-                      <a id="new_transaction" class="waves-effect waves-light btn">Make New Transaction</a>
-                    </form>
-                    <div id="new_transaction_message"></div>
-                    <div id="new_transaction_warning"></div>
-                </div></div>
+                    </div>
+                </div>
                 <div id="test3" class="col s12">
                     <div class="row">
                         <form class="col s12">
