@@ -11,14 +11,24 @@
             <div class="nav-wrapper">
               <a href="#" class="brand-logo right">Logo</a>
               <ul id="nav-mobile" class="left hide-on-med-and-down">
-                <li><a href="sass.html">Sass</a></li>
+                <!-- <li><a href="sass.html">Sass</a></li>
                 <li><a href="badges.html">Components</a></li>
-                <li><a href="collapsible.html">JavaScript</a></li>
+                <li><a href="collapsible.html">JavaScript</a></li> -->
               </ul>
             </div>
         </nav>
         <div class="container">
-            <h3>Add Node</h3>
+            <div class="row">
+                <div class="col s12">
+                  <ul class="tabs">
+                    <li class="tab col s3"><a href="#test1">Add node</a></li>
+                    <li class="tab col s3"><a class="active" href="#test2">Wallet</a></li>
+                    <li class="tab col s3 "><a href="#test3">Transactions</a></li>
+                    <li class="tab col s3"><a href="#test4">Mine/View Chain</a></li>
+                  </ul>
+                </div>
+                <div id="test1" class="col s12">
+                    <h6>Add Node</h6>
             
             <div class="row">
                 <form class="col s12">
@@ -36,94 +46,115 @@
                   </div>
                   <a id="register_node" class="waves-effect waves-light btn">Register Node</a>
                 </form>
-            <div id="node_message"></div>
-            </div>
-            
-            <div class="row">
-                <form class="col s12"><!--todo-->
-                <h3>Wallet</h3>
-                  <div class="row">
-                    <div class="input-field col s12">
-                      <input id="add_wallet_amount" type="number" class="validate">
-                      <label for="add_wallet_amount">Amount</label>
-                    </div>
-                  </div>
-                  <a id="topup_wallet" class="waves-effect waves-light btn">Add Balance To Wallet</a>
-                  <a id="check_wallet" class="waves-effect waves-light btn">Check Wallet Balance</a>
-                </form>
-                <div id="add_wallet_amount_message"></div>
-                <div>
-                    <table id="wallet_table"><thead><tr><th>Wallet:</th></tr></thead>
-                    </table>
+                    <div id="node_message"></div>
+                    <div id="node_table" class="col s12"></div>
+                    <div id="all_node"></div>
                 </div>
-            </div>
-            <!-- show balance
-            add balance -->
-            
-            <div class="row">
-                <form class="col s12">
-                <h3>Make New Transactions</h3>
-                  <div class="row">
-                    <div class="input-field col s12">
-                      <input id="recipient_address" type="text" class="validate">
-                      <label for="recipient_address">Recipient address</label>
-                    </div>
-                  </div>
-                  <div class="row">
-                    <div class="input-field col s12">
-                      <input id="amount" type="number" class="validate">
-                      <label for="amount">Amount</label>
-                    </div>
-                  </div>
-                  <a id="new_transaction" class="waves-effect waves-light btn">Make New Transaction</a>
-                </form>
-                <div id="new_transaction_message"></div>
-                <div id="new_transaction_warning"></div>
-            </div>
-            
-            <div class="row">
-                <form class="col s12">
-                <h3>Get Transactions</h3>
-                <a id="get_transactions" class="waves-effect waves-light btn">Get Transactions</a>
-                </form>
-                <div>
-                    <h3>Transaction Record:</h3>
-                    <table id="transaction_table">
-                        <thead>
-                            <tr><th> Sender:</th><th> Recipient:</th><th> Value:</th><th> Signature:</th></tr>
-                        </thead>
-                    </table>
                 </div>
+                
+                <div id="test2" class="col s12"><div class="row">
+                    <form class="col s12">
+                    <h6>Make New Transactions</h6>
+                      <div class="row">
+                        <div class="input-field col s12">
+                          <input id="recipient_address" type="text" class="validate">
+                          <label for="recipient_address">Recipient address</label>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="input-field col s12">
+                          <input id="amount" type="number" class="validate">
+                          <label for="amount">Amount</label>
+                        </div>
+                      </div>
+                      <a id="new_transaction" class="waves-effect waves-light btn">Make New Transaction</a>
+                    </form>
+                    <div id="new_transaction_message"></div>
+                    <div id="new_transaction_warning"></div>
+                </div></div>
+                <div id="test3" class="col s12">
+                    <div class="row">
+                        <form class="col s12">
+                        <h6>Make New Transactions</h6>
+                          <div class="row">
+                            <div class="input-field col s12">
+                              <input id="recipient_address" type="text" class="validate">
+                              <label for="recipient_address">Recipient address</label>
+                            </div>
+                          </div>
+                          <div class="row">
+                            <div class="input-field col s12">
+                              <input id="amount" type="number" class="validate">
+                              <label for="amount">Amount</label>
+                            </div>
+                          </div>
+                          <a id="new_transaction" class="waves-effect waves-light btn">Make New Transaction</a>
+                        </form>
+                        <div id="new_transaction_message"></div>
+                        <div id="new_transaction_warning"></div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="row">
+                        <form class="col s12">
+                        <h6>Get Transactions</h6>
+                        <a id="get_transactions" class="waves-effect waves-light btn">Get Transactions</a>
+                        </form>
+                        <div class="col s12">
+                            <table id="transaction_table">
+                                <h6>Transaction Record:</h6>
+                                <thead>
+                                    <tr><th> Sender:</th><th> Recipient:</th><th> Value:</th><th> Signature:</th></tr>
+                                </thead>
+                            </table>
+                            
+                            <table id="transaction_table">
+                                <h6>My Transaction Record:</h6>
+                                <thead>
+                                    <tr><th> Sender:</th><th> Recipient:</th><th> Value:</th><th> Signature:</th></tr>
+                                </thead>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div id="test4" class="col s12">
+                
+                
+                
+                <div class="row">
+                    <form class="col s12">
+                    <h6>Consensus</h6>
+                    <a id="consensus" class="waves-effect waves-light btn">Get consensus</a>
+                    <div id="consensus_message"></div>
+                    </form>
+                </div>
+                <div class="divider"></div>
+                <div class="row">
+                    <form class="col s12">
+                        <h6>Mine</h6>
+                    <a id="mine" class="waves-effect waves-light btn">Mine</a>
+                    <ul id="mine_table" class="collection with-header"></ul>
+                    <div id="mine_message"></div>
+                    </form>
+                </div>
+                <div class="divider"></div>
+                <div class="row">
+                    <form class="col s12">
+                    <h6>Get chain</h6><!--todo-->
+                    <a id="get_chain" class="waves-effect waves-light btn">Get Chain</a>
+                    <div id="chain"></div><!-- visualise -->
+                    </form>
+                </div>
+                <div class="divider"></div>
             </div>
-            <div class="row">
-                <form class="col s12">
-                <h3>Get chain</h3><!--todo-->
-                <a id="get_chain" class="waves-effect waves-light btn">Get Chain</a>
-                <div id="chain"></div><!-- visualise -->
-                </form>
-            </div>
+              </div>
+            
+           
             
             
-            <div class="row">
-                <form class="col s12">
-                <h3>Consensus</h3>
-                <a id="consensus" class="waves-effect waves-light btn">Get consensus</a>
-                <div id="consensus_message"></div>
-                </form>
-            </div>
-            
-            <div class="row">
-                <form class="col s12">
-                    <h3>Mine</h3>
-                <a id="mine" class="waves-effect waves-light btn">Mine</a>
-                <ul id="mine_table" class="collection with-header"></ul>
-                <div id="mine_message"></div>
-                </form>
-            </div>
 
             <!-- <div class="row">
                 <form class="col s12">
-                    <h3>Interest</h3>
+                    <h6>Interest</h6>
                 <a id="interest" class="waves-effect waves-light btn">Interest</a>
                 <ul id="interest_table" class="collection with-header"></ul>
                 <div id="interest_message"></div>
@@ -136,6 +167,8 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
         <script>
+        M.AutoInit();
+
         // var SendInfo= { SendInfo: $("#wallet_amount")};
         $(document).ready(function () {
             $("#register_node").click(function (e) {
@@ -155,14 +188,26 @@
                     dataType: "json",
                     success: function (result, status) {
                         var message = result["message"];
-                        var table = $("<table><thead><tr><th></th></tr></thead>");
+                        var table = "<ul class=\"collection with-header\"></ul>";
+                        var all_node = "";
+
                         table.append("<tbody>");
-                        for(var i in result["my_transactions_record"]){
+                        
+                        for(var i in result["blockchain"]){
+                            var record = result["blockchain"][i];
                             table.append("<tr><td>Transaction "+ i +":</td><td>" + result["my_transactions_record"][i] + "</td></tr>");
                         }
                         table.append("</tbody>");
+
+
+                        for(var i in result["total_nodes"]){
+                            all_node += result["total_nodes"][i] + "<br>";
+                        }
+
                         $("#node_table").html(table);
                         $("#node_message").html(message);
+                        $("#all_node").html(all_node);
+                    
                     },
                     error: function (xhr, status, error) {
                         alert("Result: " + status + " " + error + " " + xhr.status + " " + xhr.statusText)
@@ -181,14 +226,14 @@
                             $("#mine_message").html(message);
                         }else{
                             var list = $("#mine_table");
-                            list.append("<li class=\"collection-header\"><h4>New Block</h4></li>");
-                            list.append("<li class=\"collection-item\"><div>Index<div class=\"secondary-content\">"+result["index"]+ "</div></div></li>");
-                            list.append("<li class=\"collection-item\"><div>Transactions<div class=\"secondary-content\">"+result["transactions"]+ "</div></div></li>");
-                            list.append("<li class=\"collection-item\"><div>Timestamp<div class=\"secondary-content\">"+result["timestamp"]+ "</div></div></li>");
-                            list.append("<li class=\"collection-item\"><div>Previous_hash<div class=\"secondary-content\">"+result["previous_hash"]+ "</div></div></li>");
-                            list.append("<li class=\"collection-item\"><div>Hash<div class=\"secondary-content\">"+result["hash"]+ "</div></div></li>");
-                            list.append("<li class=\"collection-item\"><div>Nonce<div class=\"secondary-content\">"+result["nonce"]+ "</div></div></li>");
-                            list.append("<li class=\"collection-item\"><div>Difficulty<div class=\"secondary-content\">"+result["difficulty"]+ "</div></div></li>");
+                            list.append("<li class=\"collection-header\"><h6>New Block</h6></li>");
+                            list.append("<li class=\"collection-item\"><div>Index:<div class=\"secondary-content\"> "+result["index"]+ " </div></div></li>");
+                            list.append("<li class=\"collection-item\"><div>Transactions:<div class=\"secondary-content\">"+result["transactions"]+ "</div></div></li>");
+                            list.append("<li class=\"collection-item\"><div>Timestamp:<div class=\"secondary-content\">"+result["timestamp"]+ "</div></div></li>");
+                            list.append("<li class=\"collection-item\"><div>Previous_hash:<div class=\"secondary-content\">"+result["previous_hash"]+ "</div></div></li>");
+                            list.append("<li class=\"collection-item\"><div>Hash:<div class=\"secondary-content\">"+result["hash"]+ "</div></div></li>");
+                            list.append("<li class=\"collection-item\"><div>Nonce:<div class=\"secondary-content\">"+result["nonce"]+ "</div></div></li>");
+                            list.append("<li class=\"collection-item\"><div>Difficulty:<div class=\"secondary-content\">"+result["difficulty"]+ "</div></div></li>");
                         }
                     },
                     error: function (xhr, status, error) {
@@ -285,15 +330,49 @@
                     // url: "http://127.0.0.1:"+port+"/get_transactions",
                     dataType: "json",
                     success: function (result, status) {
-                        var table = $("#transaction_table");
-                        table.append("<tbody>");
+                        var transaction_table = $("#transaction_table");
+                        var my_transaction_table = $("#my_transaction_table");
+                        transaction_table.append("<tbody>");
+
+                        for(var i in result["transactions"]){
+                            transaction_table.append("<tr><td>" + result["transactions"][i]["sender"] + "</td>"+"<td>" + result["transactions"][i]["recipient"] + "</td>"+"<td>" + result["transactions"][i]["value"] + "</td>"+"<td>" + result["transactions"][i]["signature"] + "</td>"+"</tr>");
+                        }
+                        transaction_table.append("</tbody>");
+                        my_transaction_table.append("<tbody>");
 
                         for(var i in result["my_transactions_record"]){
-                            table.append("<tr><td>" + result["my_transactions_record"][i]["sender"] + "</td>"+"<td>" + result["my_transactions_record"][i]["recipient"] + "</td>"+"<td>" + result["my_transactions_record"][i]["value"] + "</td>"+"<td>" + result["my_transactions_record"][i]["signature"] + "</td>"+"</tr>");
+                            my_transaction_table.append("<tr><td>" + result["my_transactions_record"][i]["sender"] + "</td>"+"<td>" + result["my_transactions_record"][i]["recipient"] + "</td>"+"<td>" + result["my_transactions_record"][i]["value"] + "</td>"+"<td>" + result["my_transactions_record"][i]["signature"] + "</td>"+"</tr>");
                         }
-                        table.append("</tbody>");
+                        my_transaction_table.append("</tbody>");
 
-                        $("#transactions").html(table);
+                    },
+                    error: function (xhr, status, error) {
+                        alert("Result: " + status + " " + error + " " + xhr.status + " " + xhr.statusText)
+                    }
+                });
+            });
+            $("#get_chain").click(function (e) {
+                $.ajax({
+                    type: "GET",
+                    url: "http://127.0.0.1:5000/chain_v",
+                    // url: "http://127.0.0.1:"+port+"/get_transactions",
+                    dataType: "json",
+                    success: function (result, status) {
+                        var transaction_table = $("#transaction_table");
+                        var my_transaction_table = $("#my_transaction_table");
+                        transaction_table.append("<tbody>");
+
+                        for(var i in result["transactions"]){
+                            transaction_table.append("<tr><td>" + result["transactions"][i]["sender"] + "</td>"+"<td>" + result["transactions"][i]["recipient"] + "</td>"+"<td>" + result["transactions"][i]["value"] + "</td>"+"<td>" + result["transactions"][i]["signature"] + "</td>"+"</tr>");
+                        }
+                        transaction_table.append("</tbody>");
+                        my_transaction_table.append("<tbody>");
+
+                        for(var i in result["my_transactions_record"]){
+                            my_transaction_table.append("<tr><td>" + result["my_transactions_record"][i]["sender"] + "</td>"+"<td>" + result["my_transactions_record"][i]["recipient"] + "</td>"+"<td>" + result["my_transactions_record"][i]["value"] + "</td>"+"<td>" + result["my_transactions_record"][i]["signature"] + "</td>"+"</tr>");
+                        }
+                        my_transaction_table.append("</tbody>");
+
                     },
                     error: function (xhr, status, error) {
                         alert("Result: " + status + " " + error + " " + xhr.status + " " + xhr.statusText)
