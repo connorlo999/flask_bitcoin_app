@@ -422,9 +422,9 @@ def new_transaction():
 
     signature = myWallet.sign_transaction(t)
 
-    total_amount = float(values['amount'])
+    total_amount = values['amount']
     recipient = values['recipient_address']
-    transaction_fee = total_amount + 0.5
+    transaction_fee = float(total_amount) + 0.5
 
     if myWallet.check_balance(transaction_fee):
         t = Transaction(myWallet.identity, recipient, total_amount)
