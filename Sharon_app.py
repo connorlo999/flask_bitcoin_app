@@ -61,13 +61,13 @@ class Transaction:
 
             if response.status_code == 200:
 
-                pub_key = response.json()['Public key']
+                pub_key = response.json()['public_key']
 
                 pub_key = json.loads(pub_key)
                 deposite_amount = float(amount)
 
                 if pub_key == recipient:
-                    data = {"Amount": str(deposite_amount)}
+                    data = {"amount": str(deposite_amount)}
                     headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
                     requests.post(f'http://' + node + '/myWallet/wallet', data=json.dumps(data), headers=headers)
                     return True
@@ -194,7 +194,8 @@ class Blockchain:
                     or last_transaction['signature'] == transaction.signature:
                 verify_transaction_record = False
 
-        if transaction.verify_transaction_signature() and verify_transaction_record:
+        if transaction.verify_transaction_signature() and verify_transaction_record \
+                and transaction.deposite_amount_recipient(recipient=transaction.recipient, amount=transaction.value):
             self.unconfirmed_transactions.append(transaction.to_json())
             myWallet.all_transactions.append(transaction.to_json())
             return True
@@ -367,12 +368,10 @@ class Blockchain:
 @app.route('/<wallet_identity>/wallet', methods=['GET', 'POST'])
 def wallet_identity(wallet_identity):
     if request.method == 'POST':
-        required = ['Amount']
+        required = ['amount']
         values = request.get_json()
-        if not all(k in values for k in required):
-            return 400
 
-        amount = float(values['Amount'])
+        amount = float(values['amount'])
         wallet_temp = Wallet(amount)
         myWallet.deposit(wallet_temp.balance)
         response = {
@@ -385,9 +384,9 @@ def wallet_identity(wallet_identity):
         balance = json.dumps(globals()[f'{wallet_identity}'].balance, cls=json_format)
 
         response = {
-            'Public key': pub_key,
-            'Private key': pri_key,
-            'Balance': balance
+            'public_key': pub_key,
+            'private_key': pri_key,
+            'balance': balance
         }
         return jsonify(response), 200
 
@@ -417,23 +416,17 @@ def new_transaction():
         t = Transaction(myWallet.identity, recipient, total_amount)
         t.add_signature(signature)
         transaction_result = blockchain.add_new_transaction(t)
-        transfer_result = t.deposite_amount_recipient(recipient, total_amount)
 
-        if not transfer_result:
-            myWallet.payment(0.5)
-            response = {'message': 'Invalid Transaction! There is a cost of the network gas fee.',
-                        'warning': '1. Please make HTTP connection with other nodes. \
-                        2. The public address is invalid.'}
-            return jsonify(response), 406
-
-        if transaction_result and transfer_result:
+        if transaction_result:
             myWallet.payment(transaction_fee)
             response = {'message': 'Transaction is successful. It will be added to the block'}
             return jsonify(response), 201
         else:
             myWallet.payment(0.5)
             response = {'message': 'Invalid Transaction! There is a cost of the network gas fee.',
-                        'warning': 'If you wish to transfer it again, please create a new transaction.'}
+                        'warning': '1. If you wish to transfer it again, please create a new transaction. \
+                         2. The public address is invalid. \
+                         3. Please make HTTP connection with other nodes. '}
             return jsonify(response), 406
 
     else:
@@ -485,9 +478,11 @@ def get_nodes():
 
 @app.route('/register_node', methods=['POST'])
 def register_node():
-    values = request.json
+    values = request.get_json()
 
     required = ['host', 'port']
+    if not all(k in values for k in required):
+        return 'Missing values', 400
 
     if (values['host'] == "" and values['port'] == "") or values['host'] == "" or values['port'] == str(port):
         return 'Input invalid', 400
@@ -567,7 +562,7 @@ def mine():
 
 @app.route('/interest', methods=['POST'])
 def interest():
-    values = request.json
+    values = request.get_json()
     wallet_identity = values['wallet_identity']
     new_block = blockchain.interest(globals()[f'{wallet_identity}'])
     for node in blockchain.nodes:
