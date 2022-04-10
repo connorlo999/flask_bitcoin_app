@@ -401,7 +401,11 @@ def wallet_identity(wallet_identity):
 
 @app.route('/new_transaction', methods=['POST'])
 def new_transaction():
-    values = request.get_json()
+    #values = request.get_json()
+    try:
+        values = request.json
+    except:
+        values = json.loads(json.dumps(request.form)) # get input from  Register_node.html
 
     required = ['recipient_address', 'amount']
     if not all(k in values for k in required):
@@ -418,7 +422,7 @@ def new_transaction():
 
     signature = myWallet.sign_transaction(t)
 
-    total_amount = values['amount']
+    total_amount = float(values['amount'])
     recipient = values['recipient_address']
     transaction_fee = total_amount + 0.5
 
@@ -517,15 +521,17 @@ def get_nodes():
 @app.route('/register_node', methods=['POST'])
 def register_node():
 
-    #values = request.json
-    values = json.loads(json.dumps(request.form)) # get input from  Register_node.html
+    try:
+        values = request.json
+    except:
+        values = json.loads(json.dumps(request.form)) # get input from  Register_node.html
 
-    required = ['node', 'com_port'] #Please don't change the name
+    required = ['host', 'port'] #Please don't change the name
 
-    if (values['node'] == "" and values['com_port'] == "") or values['node'] == "" or values['com_port'] == str(port):
+    if (values['host'] == "" and values['port'] == "") or values['host'] == "" or values['port'] == str(port):
         return 'Input invalid', 400
 
-    new_address = f'{values["node"]}:{values["com_port"]}'
+    new_address = f'{values["host"]}:{values["port"]}'
     if new_address in blockchain.nodes:
         return 'Node Added', 200
 
@@ -540,13 +546,13 @@ def register_node():
     else:
         node_list = r.json()["nodes"]
         blockchain.register_node(f'http://{new_address}')
-        data = {"node": str(host), "com_port": str(port)}
+        data = {"host": str(host), "port": str(port)}
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
         requests.post(f'http://{new_address}/register_node', data=json.dumps(data), headers=headers)
 
         for node in node_list:
             if not(node in blockchain.nodes) and node != f'127.0.0.1:{port}':
-                data = {"node": str(host), "com_port": str(port)}
+                data = {"host": str(host), "port": str(port)}
                 headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
                 requests.post(f'http://{node}/register_node', data=json.dumps(data), headers=headers)
 
