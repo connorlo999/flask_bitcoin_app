@@ -44,11 +44,11 @@
                 <h3>Wallet</h3>
                   <div class="row">
                     <div class="input-field col s12">
-                      <input id="wallet_amount" type="number" class="validate">
-                      <label for="wallet_amount">Amount</label>
+                      <input id="add_wallet_amount" type="number" class="validate">
+                      <label for="add_wallet_amount">Amount</label>
                     </div>
                   </div>
-                  <a id="add_wallet_amount" class="waves-effect waves-light btn">Add Balance To Wallet</a>
+                  <a id="topup_wallet" class="waves-effect waves-light btn">Add Balance To Wallet</a>
                   <a id="check_wallet" class="waves-effect waves-light btn">Check Wallet Balance</a>
                 </form>
                 <div id="add_wallet_amount_message"></div>
@@ -85,8 +85,15 @@
                 <form class="col s12">
                 <h3>Get Transactions</h3>
                 <a id="get_transactions" class="waves-effect waves-light btn">Get Transactions</a>
-                <div id="transactions"><h3>Transaction Record</h3></div>
                 </form>
+                <div>
+                    <h3>Transaction Record:</h3>
+                    <table id="transaction_table">
+                        <thead>
+                            <tr><th> Sender:</th><th> Recipient:</th><th> Value:</th><th> Signature:</th></tr>
+                        </thead>
+                    </table>
+                </div>
             </div>
             <div class="row">
                 <form class="col s12">
@@ -131,12 +138,20 @@
         <script>
         // var SendInfo= { SendInfo: $("#wallet_amount")};
         $(document).ready(function () {
-            let nport = "<?!=port?>";
             $("#register_node").click(function (e) {
+                var host = document.getElementById("host").value;
+                var port = parseInt(document.getElementById("port").value);
+
+                var server_data = {
+                    "host": host,
+                    "port": port,
+                };
                 $.ajax({
                     type: "POST",
                     // url: "http://127.0.0.1:"+port+"/register_node",
                     url: "http://127.0.0.1:5000/register_node",
+                    data: JSON.stringify(server_data),
+                    contentType: "application/json",
                     dataType: "json",
                     success: function (result, status) {
                         var message = result["message"];
@@ -181,34 +196,6 @@
                     }
                 });
             });
-            // $("#interest").click(function (e) {
-            //     $.ajax({
-            //         type: "POST",
-            //         // url: "http://127.0.0.1:"+port+"/register_node",
-            //         url: "http://127.0.0.1:5000/interest",
-            //         data: {"wallet_identity": "myWallet"},
-            //         dataType: "json",
-            //         success: function (result, status) {
-            //             var message = result["message"];
-            //             if(message){
-            //                 $("#interest_message").html(message);
-            //             }else{
-            //                 var list = $("#interest_table");
-            //                 list.append("<li class=\"collection-header\"><h4>New Block</h4></li>");
-            //                 list.append("<li class=\"collection-item\"><div>Index<div class=\"secondary-content\">"+result["index"]+ "</div></div></li>");
-            //                 list.append("<li class=\"collection-item\"><div>Transactions<div class=\"secondary-content\">"+result["transactions"]+ "</div></div></li>");
-            //                 list.append("<li class=\"collection-item\"><div>Timestamp<div class=\"secondary-content\">"+result["timestamp"]+ "</div></div></li>");
-            //                 list.append("<li class=\"collection-item\"><div>Previous_hash<div class=\"secondary-content\">"+result["previous_hash"]+ "</div></div></li>");
-            //                 list.append("<li class=\"collection-item\"><div>Hash<div class=\"secondary-content\">"+result["hash"]+ "</div></div></li>");
-            //                 list.append("<li class=\"collection-item\"><div>Nonce<div class=\"secondary-content\">"+result["nonce"]+ "</div></div></li>");
-            //                 list.append("<li class=\"collection-item\"><div>Difficulty<div class=\"secondary-content\">"+result["difficulty"]+ "</div></div></li>");
-            //             }
-            //         },
-            //         error: function (xhr, status, error) {
-            //             alert("Result: " + status + " " + error + " " + xhr.status + " " + xhr.statusText)
-            //         }
-            //     });
-            // });
             $("#consensus").click(function (e) {
                 $.ajax({
                     type: "GET",
@@ -243,12 +230,17 @@
                     }
                 });
             });
-            $("#add_wallet_amount").click(function (e) {
+            $("#topup_wallet").click(function (e) {
+                var amount = parseInt(document.getElementById("add_wallet_amount").value);
+                var server_data = {
+                    "amount": amount,
+                };
                 $.ajax({
                     type: "POST",
                     // url: "http://127.0.0.1:"+port+"/register_node",
                     url: "http://127.0.0.1:5000/myWallet/wallet",
-                    data: JSON.stringify({'amount':300}),
+                    data: JSON.stringify(server_data),
+                    contentType: "application/json",
                     dataType: "json",
                     success: function (result, status) {
                         var message = result["message"];
@@ -261,11 +253,20 @@
                 });
             });
             $("#new_transaction").click(function (e) {
+                var recipient_address = document.getElementById("recipient_address").value;
+                var amount = parseInt(document.getElementById("amount").value);
+
+                var server_data = {
+                    "recipient_address":recipient_address,
+                    "amount": amount,
+                };
                 $.ajax({
                     type: "POST",
                     // url: "http://127.0.0.1:"+port+"/register_node",
                     url: "http://127.0.0.1:5000/new_transaction",
                     dataType: "json",
+                    data: JSON.stringify(server_data),
+                    contentType: "application/json",
                     success: function (result, status) {
                         var message = result["message"];
                         var warning = result["reminder"]|result["warning"];
@@ -284,11 +285,11 @@
                     // url: "http://127.0.0.1:"+port+"/get_transactions",
                     dataType: "json",
                     success: function (result, status) {
-                        var table = $("<table><thead><tr><th>Transaction Record</th></tr></thead>");
+                        var table = $("#transaction_table");
                         table.append("<tbody>");
 
                         for(var i in result["my_transactions_record"]){
-                            table.append("<tr><td>Transaction "+ i +":</td><td>" + result["my_transactions_record"][i] + "</td></tr>");
+                            table.append("<tr><td>" + result["my_transactions_record"][i]["sender"] + "</td>"+"<td>" + result["my_transactions_record"][i]["recipient"] + "</td>"+"<td>" + result["my_transactions_record"][i]["value"] + "</td>"+"<td>" + result["my_transactions_record"][i]["signature"] + "</td>"+"</tr>");
                         }
                         table.append("</tbody>");
 
