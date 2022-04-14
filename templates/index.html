@@ -4,7 +4,10 @@
         <meta charset="UTF-8">
         <meta name="vieewport" content="wiidth=device-width, initial-scale=1.0">
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-
+        <link type="text/css" rel="stylesheet" href="css/materialize.min.css"  media="screen,projection"/>
+        <style>
+            div {overflow-wrap: break-word;}
+        </style>
     </head>
     <body>
         <nav>
@@ -55,20 +58,23 @@
                 <div id="test2" class="col s12">
                     <div class="row">
                         <form class="col s12"><!--todo-->
-                        <h6>Wallet</h6>
-                          <div class="row">
-                            <!-- <div class="input-field col s12">
-                              <input id="add_wallet_amount" type="number" class="validate">
-                              <label for="add_wallet_amount">Amount</label>
+                            <div class="card-panel">
+                            <h6>Wallet</h6>
+                            <div class="row">
+                                <div class="input-field col s12">
+                                <input id="add_wallet_amount" type="number" class="validate">
+                                <label for="add_wallet_amount">Amount</label>
+                                </div>
                             </div>
-                          </div>
-                          <a id="topup_wallet" class="waves-effect waves-light btn">Add Balance To Wallet</a> -->
+                            </div>
+                          <a id="topup_wallet" class="waves-effect waves-light btn">Add Balance To Wallet</a>
                           <a id="check_wallet" class="waves-effect waves-light btn">Check Wallet Balance</a>
                         </form>
                         <div id="add_wallet_amount_message"></div>
                         <div class="col s12">
-                            <table id="wallet_table"><thead><tr><th>Wallet:</th></tr></thead>
-                            </table>
+                            <div class="card-panel">
+                            <div id="wallet_table"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -141,14 +147,13 @@
                     <form class="col s12">
                     <h6>Get chain</h6><!--todo-->
                     <a id="get_chain" class="waves-effect waves-light btn">Get Chain</a>
-                    <div id="chain"></div><!-- visualise -->
+                    <div id="chain_table">
+                    </div><!-- visualise -->
                     </form>
                 </div>
                 <div class="divider"></div>
             </div>
               </div>
-            
-           
             
             
 
@@ -168,8 +173,6 @@
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
         <script>
         M.AutoInit();
-
-        // var SendInfo= { SendInfo: $("#wallet_amount")};
         $(document).ready(function () {
             $("#register_node").click(function (e) {
                 var host = document.getElementById("host").value;
@@ -188,23 +191,22 @@
                     dataType: "json",
                     success: function (result, status) {
                         var message = result["message"];
-                        var table = "<ul class=\"collection with-header\"></ul>";
+                        var chain = result["blockchain"];
+                        var nodes = result["total_nodes"];
                         var all_node = "";
 
-                        table.append("<tbody>");
                         
-                        for(var i in result["blockchain"]){
-                            var record = result["blockchain"][i];
-                            table.append("<tr><td>Transaction "+ i +":</td><td>" + result["my_transactions_record"][i] + "</td></tr>");
-                        }
-                        table.append("</tbody>");
-
-
-                        for(var i in result["total_nodes"]){
-                            all_node += result["total_nodes"][i] + "<br>";
+                        for(var i in chain){
+                            var record = chain[i];
+                            var transaction = JSON.parse(record["transactions"][0]);
+                            var template_table = '<div id="chain" class="card-panel"><div class="row"><div class="col s4 push-s8"><span class="flow-text">Index:'+ record.index+'</span></div><div class="col s8 pull-s4">Timestamp:'+ record.timestamp+'<br>Previous hash:'+ record.previous_hash+'<br>hash:'+ record.hash+'<br>Nonce:'+ record.nonce+'<br>Difficulty:'+ record.difficulty+'<br> </div></div><div class="divider"></div><div class="section"><h5>Transaction</h5><p>Sender:'+ transaction.sender+'<br><br>Recipient:'+ transaction.recipient+'<br><br>Value:'+ transaction.value+'<br></p></div><div class="divider"></div>';
+                            $("#node_table").append(template_table);
                         }
 
-                        $("#node_table").html(table);
+                        for(var i in nodes){
+                            all_node += nodes[i] + "<br>";
+                        }
+
                         $("#node_message").html(message);
                         $("#all_node").html(all_node);
                     
@@ -264,11 +266,8 @@
                     dataType: "json",
                     success: function (result, status) {
                         var table = $("#wallet_table");
-                        table.append("<tbody>");
-                        table.append("<tr><td>Public Key:</td><td>" + result["public_key"] + "</td></tr>");
-                        table.append("<tr><td>Private Key:</td><td>" + result["private_key"] + "</td></tr>");
-                        table.append("<tr><td>Balance:</td><td>" + result["balance"] + "</td></tr>");
-                        table.append("</tbody>");
+                        var template = '<div class="section"><h5>Public Key:</h5><p>Sender:'+ result["public_key"] +'<br><br><h5>Private Key:</h5><p>'+ result["private_key"] +'<br><br><h5>Balance:</h5><p>'+ result["balance"] +'<br></p><div class="divider"></div></div>';
+                        table.html(template);
                     },
                     error: function (xhr, status, error) {
                         alert("Result: " + status + " " + error + " " + xhr.status + " " + xhr.statusText)
@@ -335,13 +334,15 @@
                         transaction_table.append("<tbody>");
 
                         for(var i in result["transactions"]){
-                            transaction_table.append("<tr><td>" + result["transactions"][i]["sender"] + "</td>"+"<td>" + result["transactions"][i]["recipient"] + "</td>"+"<td>" + result["transactions"][i]["value"] + "</td>"+"<td>" + result["transactions"][i]["signature"] + "</td>"+"</tr>");
+                            var transaction = JSON.parse(result["transactions"][i]);
+                            transaction_table.append("<tr><td>" + transaction["sender"] + "</td>"+"<td>" + transaction["recipient"] + "</td>"+"<td>" + transaction["value"] + "</td>"+"<td>" + transaction["signature"] + "</td>"+"</tr>");
                         }
                         transaction_table.append("</tbody>");
                         my_transaction_table.append("<tbody>");
 
                         for(var i in result["my_transactions_record"]){
-                            my_transaction_table.append("<tr><td>" + result["my_transactions_record"][i]["sender"] + "</td>"+"<td>" + result["my_transactions_record"][i]["recipient"] + "</td>"+"<td>" + result["my_transactions_record"][i]["value"] + "</td>"+"<td>" + result["my_transactions_record"][i]["signature"] + "</td>"+"</tr>");
+                            var transaction = JSON.parse(result["my_transactions_record"][i]);
+                            my_transaction_table.append("<tr><td>" + transaction["sender"] + "</td>"+"<td>" + transaction["recipient"] + "</td>"+"<td>" + transaction["value"] + "</td>"+"<td>" + transaction["signature"] + "</td>"+"</tr>");
                         }
                         my_transaction_table.append("</tbody>");
 
@@ -354,37 +355,25 @@
             $("#get_chain").click(function (e) {
                 $.ajax({
                     type: "GET",
-                    url: "http://127.0.0.1:5000/chain_v",
+                    url: "http://127.0.0.1:5000/chain",
                     // url: "http://127.0.0.1:"+port+"/get_transactions",
                     dataType: "json",
                     success: function (result, status) {
-                        var transaction_table = $("#transaction_table");
-                        var my_transaction_table = $("#my_transaction_table");
-                        transaction_table.append("<tbody>");
-
-                        for(var i in result["transactions"]){
-                            transaction_table.append("<tr><td>" + result["transactions"][i]["sender"] + "</td>"+"<td>" + result["transactions"][i]["recipient"] + "</td>"+"<td>" + result["transactions"][i]["value"] + "</td>"+"<td>" + result["transactions"][i]["signature"] + "</td>"+"</tr>");
+                        var chain_table = $("#chain_table");
+                        var chain = result["chain"];
+                        var record = JSON.parse(chain[0]);
+                        // $("#chain").html(record["transactions"][0]);
+                        for(var i in chain){
+                            var record = JSON.parse(chain[i]);
+                            var transaction = JSON.parse(record["transactions"][0]);
+                            var template_table = '<div id="chain" class="card-panel"><div class="row"><div class="col s4 push-s8"><span class="flow-text">Index:'+ record.index+'</span></div><div class="col s8 pull-s4">Timestamp:'+ record.timestamp+'<br>Previous hash:'+ record.previous_hash+'<br>hash:'+ record.hash+'<br>Nonce:'+ record.nonce+'<br>Difficulty:'+ record.difficulty+'<br> </div></div><div class="divider"></div><div class="section"><h5>Transaction</h5><p>Sender:'+ transaction.sender+'<br><br>Recipient:'+ transaction.recipient+'<br><br>Value:'+ transaction.value+'<br></p><div class="divider"></div></div>';
+                            chain_table.append(template_table);                            
                         }
-                        transaction_table.append("</tbody>");
-                        my_transaction_table.append("<tbody>");
-
-                        for(var i in result["my_transactions_record"]){
-                            my_transaction_table.append("<tr><td>" + result["my_transactions_record"][i]["sender"] + "</td>"+"<td>" + result["my_transactions_record"][i]["recipient"] + "</td>"+"<td>" + result["my_transactions_record"][i]["value"] + "</td>"+"<td>" + result["my_transactions_record"][i]["signature"] + "</td>"+"</tr>");
-                        }
-                        my_transaction_table.append("</tbody>");
-
                     },
                     error: function (xhr, status, error) {
                         alert("Result: " + status + " " + error + " " + xhr.status + " " + xhr.statusText)
                     }
                 });
-            });
-            $(document).ajaxStart(function () {
-                $("img").show();
-            });
-        
-            $(document).ajaxStop(function () {
-                $("img").hide();
             });
         });
         </script>
