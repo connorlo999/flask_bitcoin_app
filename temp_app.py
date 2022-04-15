@@ -511,8 +511,8 @@ def get_nodes():
 @app.route('/register_node', methods=['POST'])
 def register_node():
 
-    #values = request.json
-    values = json.loads(json.dumps(request.form)) # get input from  Register_node.html
+    values = request.json  # should be ok to get input from index.html
+    #values = json.loads(json.dumps(request.form)) # get input from  Register_node.html
 
     required = ['host', 'port']
 
