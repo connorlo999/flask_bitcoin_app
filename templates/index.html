@@ -94,10 +94,17 @@
                               <label for="amount">Amount</label>
                             </div>
                           </div>
+                          <div class="row">
+                            <div class="input-field col s12">
+                              <input id="signature" type="text" class="validate">
+                              <label for="signature">Signature</label>
+                            </div>
+                          </div>
                           <a id="new_transaction" class="waves-effect waves-light btn">Make New Transaction</a>
                         </form>
                         <div id="new_transaction_message"></div>
                         <div id="new_transaction_warning"></div>
+                        <div id="output_signature"></div>
                     </div>
                     <div class="divider"></div>
                     <div class="row">
@@ -174,6 +181,8 @@
         <script>
         M.AutoInit();
         var host_port = "{{host_port}}";
+        // var host_port = "5000";
+
         $(document).ready(function () {
             $("#register_node").click(function (e) {
                 var host = document.getElementById("host").value;
@@ -185,8 +194,8 @@
                 };
                 $.ajax({
                     type: "POST",
-                    url: "http://127.0.0.1:"+host_port+"/register_node",
-                    // url: "http://127.0.0.1:5000/register_node",
+                    // url: "http://127.0.0.1:"+host_port+"/register_node",
+                    url: "http://127.0.0.1:5000/register_node",
                     data: JSON.stringify(server_data),
                     contentType: "application/json",
                     dataType: "json",
@@ -225,7 +234,7 @@
             $("#mine").click(function (e) {
                 $.ajax({
                     type: "GET",
-                    // url: "http://127.0.0.1:"+port+"/register_node",
+                    // url: "http://127.0.0.1:5000/mine",
                     url: "http://127.0.0.1:"+host_port+"/mine",
                     dataType: "json",
                     success: function (result, status) {
@@ -254,7 +263,7 @@
             $("#consensus").click(function (e) {
                 $.ajax({
                     type: "GET",
-                    // url: "http://127.0.0.1:"+port+"/register_node",
+                    // url: "http://127.0.0.1:5000/consensus",
                     url: "http://127.0.0.1:"+host_port+"/consensus",
                     dataType: "json",
                     success: function (result, status) {
@@ -269,7 +278,7 @@
             $("#check_wallet").click(function (e) {
                 $.ajax({
                     type: "GET",
-                    // url: "http://127.0.0.1:"+port+"/register_node",
+                    // url: "http://127.0.0.1:5000/myWallet/wallet",
                     url: "http://127.0.0.1:"+host_port+"/myWallet/wallet",
                     dataType: "json",
                     success: function (result, status) {
@@ -290,7 +299,7 @@
                 };
                 $.ajax({
                     type: "POST",
-                    // url: "http://127.0.0.1:"+port+"/register_node",
+                    // url: "http://127.0.0.1:5000/myWallet/wallet",
                     url: "http://127.0.0.1:"+host_port+"/myWallet/wallet",
                     data: JSON.stringify(server_data),
                     contentType: "application/json",
@@ -308,14 +317,16 @@
             $("#new_transaction").click(function (e) {
                 var recipient_address = document.getElementById("recipient_address").value;
                 var amount = parseInt(document.getElementById("amount").value);
+                var signature = document.getElementById("signature").value;
 
                 var server_data = {
                     "recipient_address":recipient_address,
                     "amount": amount,
+                    "signature": signature,
                 };
                 $.ajax({
                     type: "POST",
-                    // url: "http://127.0.0.1:"+port+"/register_node",
+                    // url: "http://127.0.0.1:5000/new_transaction",
                     url: "http://127.0.0.1:"+host_port+"/new_transaction",
                     dataType: "json",
                     data: JSON.stringify(server_data),
@@ -323,8 +334,10 @@
                     success: function (result, status) {
                         var message = result["message"];
                         var warning = result["reminder"]|result["warning"];
+                        var output_signature = result["signature"];
                         $("#new_transaction_message").html(message);
                         $("#new_transaction_warning").html(warning);
+                        $("#output_signature").html("Signature: "+output_signature||"");
                     },
                     error: function (xhr, status, error) {
                         alert("Result: " + status + " " + error + " " + xhr.status + " " + xhr.statusText)
