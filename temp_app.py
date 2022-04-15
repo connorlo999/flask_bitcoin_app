@@ -67,13 +67,13 @@ class Transaction:
 
             if response.status_code == 200:
 
-                pub_key = response.json()['Public key']
+                pub_key = response.json()['public_key']
 
                 pub_key = json.loads(pub_key)
                 deposite_amount = float(amount)
 
                 if pub_key == recipient:
-                    data = {"Amount": str(deposite_amount)}
+                    data = {"amount": str(deposite_amount)}
                     headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
                     requests.post(f'http://' + node + '/myWallet/wallet', data=json.dumps(data), headers=headers)
                     return True
@@ -200,7 +200,8 @@ class Blockchain:
                     or last_transaction['signature'] == transaction.signature:
                 verify_transaction_record = False
 
-        if transaction.verify_transaction_signature() and verify_transaction_record:
+        if transaction.verify_transaction_signature() and verify_transaction_record \
+                and transaction.deposite_amount_recipient(recipient=transaction.recipient, amount=transaction.value):
             self.unconfirmed_transactions.append(transaction.to_json())
             myWallet.all_transactions.append(transaction.to_json())
             return True
@@ -426,23 +427,17 @@ def new_transaction():
         t = Transaction(myWallet.identity, recipient, total_amount)
         t.add_signature(signature)
         transaction_result = blockchain.add_new_transaction(t)
-        transfer_result = t.deposite_amount_recipient(recipient, total_amount)
 
-        if not transfer_result:
-            myWallet.payment(0.5)
-            response = {'message': 'Invalid Transaction! There is a cost of the network gas fee.',
-                        'warning': '1. Please make HTTP connection with other nodes. \
-                        2. The public address is invalid.'}
-            return jsonify(response), 406
-
-        if transaction_result and transfer_result:
+        if transaction_result:
             myWallet.payment(transaction_fee)
             response = {'message': 'Transaction is successful. It will be added to the block'}
             return jsonify(response), 201
         else:
             myWallet.payment(0.5)
             response = {'message': 'Invalid Transaction! There is a cost of the network gas fee.',
-                        'warning': 'If you wish to transfer it again, please create a new transaction.'}
+                        'warning': '1. If you wish to transfer it again, please create a new transaction. \
+                         2. The public address is invalid. \
+                         3. Please make HTTP connection with other nodes. '}
             return jsonify(response), 406
 
     else:
@@ -468,6 +463,7 @@ def last_ten_blocks():
     }
     return jsonify(response), 200
 
+
 @app.route('/chain_v', methods=['GET'])
 def last_ten_blocks_visualize():
     # temporary measure for visualization, see if there is any better way
@@ -481,6 +477,7 @@ def last_ten_blocks_visualize():
         html_data += '<br><br>'
     return render_template_string(html_data)
 
+
 @app.route('/full_chain', methods=['GET'])
 def full_chain():
     response = {
@@ -488,6 +485,7 @@ def full_chain():
         'length': len(blockchain.chain),
     }
     return jsonify(response), 200
+
 
 @app.route('/full_chain_v', methods=['GET'])
 def full_chain_visualize():
@@ -633,6 +631,7 @@ def auto_interest_exc():
 
 sched = BackgroundScheduler(daemon=True, job_defaults={'max_instances': 2})
 sched.add_job(auto_interest_exc, 'interval', seconds=60)
+
 
 if __name__ == '__main__':
     myWallet = Wallet()  # create wallet with $0
