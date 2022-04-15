@@ -201,7 +201,7 @@
                             record = JSON.parse(record);
                             var transactions = record.transactions;
                             transactions = JSON.parse(transactions);
-                            var template_table = '<div id="chain" class="card-panel"><div class="row"><div class="col s4 push-s8"><span class="flow-text">Index:'+ record.index+'</span></div><div class="col s8 pull-s4"><b>Timestamp: </b>'+ record.timestamp+'<br><b>Previous hash:</b>'+ record.previous_hash+'<br><b>hash:</b>'+ record.hash+'<br><b>Nonce: </b>'+ record.nonce+'<br><b>Difficulty: </b>'+ record.difficulty+'<br> </div></div><div class="divider"></div><div class="section"><h5>Transaction</h5><p><b>Sender: </b>'+ transactions.sender+'<br><br><b>Recipient: </b>'+ transactions.recipient+'<br><br><b>Value: </b>'+ transactions.value+'<br></p><div class="divider"></div></div>';
+                            var template_table = '<div id="chain" class="card-panel"><div class="row"><div class="col s4 push-s8"><span class="flow-text">Index:'+ record.index+'</span></div><div class="col s8 pull-s4"><b>Timestamp: </b>'+ record.timestamp+'<br><b>Previous hash:</b>'+ record.previous_hash+'<br><b>hash:</b>'+ record.hash+'<br><b>Nonce: </b>'+ record.nonce+'<br><b>Difficulty: </b>'+ record.difficulty+'<br> </div></div><div class="divider"></div><div class="section"><h5>Transaction</h5><p><b>Sender: </b>'+ transactions.sender ||" " +'<br><br><b>Recipient: </b>'+ transactions.recipient||" " +'<br><br><b>Value: </b>'+ transactions.value||" " +'<br></p><div class="divider"></div></div>';
                             $("#node_table").append(template_table);
                         }
 
@@ -363,13 +363,9 @@
                     success: function (result, status) {
                         var chain_table = $("#chain_table");
                         var chain = result["chain"];
-                        // var record = chain[0];
-                        // record = JSON.parse(record);
-                        // var transactions = record.transactions;
-                        // transactions = JSON.parse(transactions);
-                        // var template_table = '<div id="chain" class="card-panel"><div class="row"><div class="col s4 push-s8"><span class="flow-text">Index:'+ record.index+'</span></div><div class="col s8 pull-s4">Timestamp:'+ record.timestamp+'<br>Previous hash:'+ record.previous_hash+'<br>hash:'+ record.hash+'<br>Nonce:'+ record.nonce+'<br>Difficulty:'+ record.difficulty+'<br> </div></div><div class="divider"></div><div class="section"><h5>Transaction</h5><p>Sender:'+ transactions.sender+'<br><br>Recipient:'+ transactions.recipient+'<br><br>Value:'+ transactions.value+'<br></p><div class="divider"></div></div>';
-                        // chain_table.append(template_table);  
+                        
                         for(var i in chain){
+                            if(i == 0)continue;
                             var record = chain[i];
                             record = JSON.parse(record);
                             var transactions = record.transactions;
