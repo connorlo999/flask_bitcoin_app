@@ -194,8 +194,8 @@
                 };
                 $.ajax({
                     type: "POST",
-                    // url: "http://127.0.0.1:"+host_port+"/register_node",
-                    url: "http://127.0.0.1:5000/register_node",
+                    url: "http://127.0.0.1:"+host_port+"/register_node",
+                    // url: "http://127.0.0.1:5000/register_node",
                     data: JSON.stringify(server_data),
                     contentType: "application/json",
                     dataType: "json",
@@ -208,6 +208,12 @@
                         $("#node_table").html("");
                         $("#node_message").html("");
                         $("#all_node").html("");
+                        for(var i in nodes){
+                            all_node += nodes[i] + "<br>";
+                        }
+
+                        $("#node_message").html(message);
+                        $("#all_node").html(all_node);
 
                         for(var i in chain){
                             var record = chain[i];
@@ -218,12 +224,7 @@
                             $("#node_table").append(template_table);
                         }
 
-                        for(var i in nodes){
-                            all_node += nodes[i] + "<br>";
-                        }
-
-                        $("#node_message").html(message);
-                        $("#all_node").html(all_node);
+                        
                     
                     },
                     error: function (xhr, status, error) {
