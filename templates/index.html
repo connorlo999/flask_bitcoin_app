@@ -173,6 +173,7 @@
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
         <script>
         M.AutoInit();
+        var host_port = "{{host_port}}";
         $(document).ready(function () {
             $("#register_node").click(function (e) {
                 var host = document.getElementById("host").value;
@@ -184,8 +185,8 @@
                 };
                 $.ajax({
                     type: "POST",
-                    // url: "http://127.0.0.1:"+port+"/register_node",
-                    url: "http://127.0.0.1:5000/register_node",
+                    url: "http://127.0.0.1:"+host_port+"/register_node",
+                    // url: "http://127.0.0.1:5000/register_node",
                     data: JSON.stringify(server_data),
                     contentType: "application/json",
                     dataType: "json",
@@ -225,7 +226,7 @@
                 $.ajax({
                     type: "GET",
                     // url: "http://127.0.0.1:"+port+"/register_node",
-                    url: "http://127.0.0.1:5000/mine",
+                    url: "http://127.0.0.1:"+host_port+"/mine",
                     dataType: "json",
                     success: function (result, status) {
                         var message = result["message"];
@@ -254,7 +255,7 @@
                 $.ajax({
                     type: "GET",
                     // url: "http://127.0.0.1:"+port+"/register_node",
-                    url: "http://127.0.0.1:5000/consensus",
+                    url: "http://127.0.0.1:"+host_port+"/consensus",
                     dataType: "json",
                     success: function (result, status) {
                         var message = result["message"];
@@ -269,7 +270,7 @@
                 $.ajax({
                     type: "GET",
                     // url: "http://127.0.0.1:"+port+"/register_node",
-                    url: "http://127.0.0.1:5000/myWallet/wallet",
+                    url: "http://127.0.0.1:"+host_port+"/myWallet/wallet",
                     dataType: "json",
                     success: function (result, status) {
                         var table = $("#wallet_table");
@@ -290,7 +291,7 @@
                 $.ajax({
                     type: "POST",
                     // url: "http://127.0.0.1:"+port+"/register_node",
-                    url: "http://127.0.0.1:5000/myWallet/wallet",
+                    url: "http://127.0.0.1:"+host_port+"/myWallet/wallet",
                     data: JSON.stringify(server_data),
                     contentType: "application/json",
                     dataType: "json",
@@ -315,7 +316,7 @@
                 $.ajax({
                     type: "POST",
                     // url: "http://127.0.0.1:"+port+"/register_node",
-                    url: "http://127.0.0.1:5000/new_transaction",
+                    url: "http://127.0.0.1:"+host_port+"/new_transaction",
                     dataType: "json",
                     data: JSON.stringify(server_data),
                     contentType: "application/json",
@@ -333,7 +334,7 @@
             $("#get_transactions").click(function (e) {
                 $.ajax({
                     type: "GET",
-                    url: "http://127.0.0.1:5000/get_transactions",
+                    url: "http://127.0.0.1:"+host_port+"/get_transactions",
                     // url: "http://127.0.0.1:"+port+"/get_transactions",
                     dataType: "json",
                     success: function (result, status) {
@@ -363,7 +364,7 @@
             $("#get_chain").click(function (e) {
                 $.ajax({
                     type: "GET",
-                    url: "http://127.0.0.1:5000/chain",
+                    url: "http://127.0.0.1:"+host_port+"/chain",
                     // url: "http://127.0.0.1:"+port+"/get_transactions",
                     dataType: "json",
                     success: function (result, status) {

@@ -372,7 +372,7 @@ class Blockchain:
 
 @app.route('/')
 def form():
-    return render_template('index.html',port = port)
+    return render_template('index.html',host_port = port)
 
 @app.route('/<wallet_identity>/wallet', methods=['GET', 'POST'])
 def wallet_identity(wallet_identity):
