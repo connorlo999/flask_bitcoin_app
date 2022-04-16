@@ -25,7 +25,7 @@ app = Flask(__name__)
 app.config.from_object(__name__)
 # enable CORS
 CORS(app, resources={r'/*': {'origins': '*'}})
-port = 5000
+port = 5001
 
 
 class json_format(JSONEncoder):
