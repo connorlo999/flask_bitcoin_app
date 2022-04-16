@@ -113,22 +113,12 @@
                         <a id="get_transactions" class="waves-effect waves-light btn">Get Transactions</a>
                         </form>
                         <div class="col s12">
-
-                            <table id="transaction_table">
-                                <h6>Transaction Record:</h6>
-                                <thead>
-                                    <tr><th> Sender:</th><th> Recipient:</th><th> Value:</th><th> Signature:</th></tr>
-                                </thead>
-                                <tbody></tbody>
-                            </table>
-                            
-                            <table id="transaction_table">
-                                <h6>My Transaction Record:</h6>
-                                <thead>
-                                    <tr><th> Sender:</th><th> Recipient:</th><th> Value:</th><th> Signature:</th></tr>
-                                </thead>
-                                <tbody></tbody>
-                            </table>
+                            <h6>Transaction Record:</h6>
+                            <div id="transaction_table">
+                            </div>
+                            <h6>My Transaction Record:</h6>
+                            <div id="my_transaction_table">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -288,8 +278,9 @@
                     success: function (result, status) {
                         var table = $("#wallet_table");
                         table.html("");
-                        var template = '<div class="section"><h5>Public Key:</h5><p>Sender:'+ result["public_key"] +'<br><br><h5>Private Key:</h5><p>'+ result["private_key"] +'<br><br><h5>Balance:</h5><p>'+ result["balance"] +'<br></p><div class="divider"></div></div>';
-                        table.html(template);
+                       
+                        var template = '<div class="section"><h5>Wallet:</h5><p><div><b>Sender: </b>'+ result["public_key"]+'</div><div class="divider"></div><br><div><b>Private Key: </b>'+ result["private_key"]+'</div><br><div class="divider"></div><div><b>Balance: </b>'+ result["balance"]+'</div><br></p><div class="divider"></div></div>';
+                        table.append(template);
                     },
                     error: function (xhr, status, error) {
                         alert("Result: " + status + " " + error + " " + xhr.status + " " + xhr.statusText)
@@ -360,14 +351,16 @@
                         var transactions = result["transactions"];
                         var mytransactions = result["my_transactions_record"]; 
 
+                        transaction_table.html("");
+                        my_transaction_table.html("");
                         for(var i in transactions){
                             var transaction = JSON.parse(transactions[i]);
-                            transaction_table.append("<tr><td>" + transaction["sender"]||"" + "</td>"+"<td>" + transaction["recipient"]||"" + "</td>"+"<td>" + transaction["value"]||"" + "</td>"+"<td>" + transaction["signature"]||"" + "</td>"+"</tr>");
+                            transaction_table.append('<div class="card-panel"><div class="row"><div class="section"><h5>Transaction</h5><p><b>Sender: </b>'+ transaction.sender||''+'<br><br><b>Recipient: </b>'+ transaction.recipient||''+'<br><br><b>Value: </b>'+ transaction.value||''+'<br></p><div class="divider"></div></div></div>');
                         }
 
                         for(var i in mytransactions){
-                            var transaction = JSON.parse(result["my_transactions_record"][i]);
-                            my_transaction_table.append("<tr><td>" + transaction["sender"]||"" + "</td>"+"<td>" + transaction["recipient"]||"" + "</td>"+"<td>" + transaction["value"]||"" + "</td>"+"<td>" + transaction["signature"]||"" + "</td>"+"</tr>");
+                            var transaction = JSON.parse(mytransactions[i]);
+                            my_transaction_table.append('<div class="card-panel"><div class="row"><div class="section"><h5>Transaction</h5><p><b>Sender: </b>'+ transaction.sender||''+'<br><br><b>Recipient: </b>'+ transaction.recipient||''+'<br><br><b>Value: </b>'+ transactions.value||''+'<br></p><div class="divider"></div></div></div>');
                         }
                     },
                     error: function (xhr, status, error) {
