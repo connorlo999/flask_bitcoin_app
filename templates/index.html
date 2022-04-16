@@ -355,12 +355,12 @@
                         my_transaction_table.html("");
                         for(var i in transactions){
                             var transaction = JSON.parse(transactions[i]);
-                            transaction_table.append('<div class="card-panel"><p><b>Sender: </b>'+ transaction.sender||''+'<br><br><b>Recipient: </b>'+ transaction.recipient||''+'<br><br><b>Value: </b>'+ transaction.value||''+'<br></p><div class="divider"></div></div>');
+                            transaction_table.append('<div class="card-panel"><p><b>Sender: </b>'+ transaction.sender+'<br><br><b>Recipient: </b>'+ transaction.recipient+'<br><br><b>Value: </b>'+ transaction.value+'<br></p><div class="divider"></div></div>');
                         }
 
                         for(var i in mytransactions){
                             var transaction = JSON.parse(mytransactions[i]);
-                            my_transaction_table.append('<div class="card-panel"><p><b>Sender: </b>'+ transaction.sender||''+'<br><br><b>Recipient: </b>'+ transaction.recipient||''+'<br><br><b>Value: </b>'+ transaction.value||''+'<br></p><div class="divider"></div></div>');
+                            my_transaction_table.append('<div class="card-panel"><p><b>Sender: </b>'+ transaction.sender+'<br><br><b>Recipient: </b>'+ transaction.recipient+'<br><br><b>Value: </b>'+ transaction.value+'<br></p><div class="divider"></div></div>');
                         }
                     },
                     error: function (xhr, status, error) {
