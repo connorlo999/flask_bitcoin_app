@@ -4,8 +4,9 @@
 
 Instructions to run the program:
 1. Download this github project
-2. Run the 3 python files (5000.py , 5001.py , 5002.py) # port 5000 && port 5001 && port 5002
-3. Use postman or web application (GUI) approach to perform the functions.
+2. Download the required packages*
+3. Run the 3 python files (5000.py , 5001.py , 5002.py) # port 5000 && port 5001 && port 5002
+4. Use postman or web application (GUI) approach to perform the functions.
     Postman approach:
     - Demo video: https://youtu.be/YPlCgIZM9IM
     - Please refer to the report for the detailed instructions
@@ -16,6 +17,20 @@ Instructions to run the program:
     - Demo video: https://youtu.be/qDIFtD59erI
     - Please refer to the report for the detailed instructions
 
+
+* Required packages:
+    - Crypto
+    - hashlib
+    - datetime
+    - time
+    - json
+    - binascii
+    - requests
+    - flask
+    - flask_cors
+    - urllib
+    - json2html
+    - apscheduler
 
 
 Remarks:
