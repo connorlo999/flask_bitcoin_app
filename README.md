@@ -12,3 +12,6 @@ wilson-t WT/ Tang Wai Shun Wilson
 
 
 Bitcoin system folder consists of 3 files/ ports
+
+
+templates folder includes index.html code
