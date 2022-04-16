@@ -11,7 +11,7 @@ connorlo999/ Lo Yuk Long
 wilson-t WT/ Tang Wai Shun Wilson
 
 
-Bitcoin system folder consists of 3 files/ ports
+flask_bitcoin_app folder consists of 3 files/ ports
 
 
 templates folder includes index.html code
