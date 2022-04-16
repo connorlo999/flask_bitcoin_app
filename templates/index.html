@@ -113,11 +113,13 @@
                         <a id="get_transactions" class="waves-effect waves-light btn">Get Transactions</a>
                         </form>
                         <div class="col s12">
+
                             <table id="transaction_table">
                                 <h6>Transaction Record:</h6>
                                 <thead>
                                     <tr><th> Sender:</th><th> Recipient:</th><th> Value:</th><th> Signature:</th></tr>
                                 </thead>
+                                <tbody></tbody>
                             </table>
                             
                             <table id="transaction_table">
@@ -125,6 +127,7 @@
                                 <thead>
                                     <tr><th> Sender:</th><th> Recipient:</th><th> Value:</th><th> Signature:</th></tr>
                                 </thead>
+                                <tbody></tbody>
                             </table>
                         </div>
                     </div>
@@ -354,21 +357,18 @@
                     success: function (result, status) {
                         var transaction_table = $("#transaction_table");
                         var my_transaction_table = $("#my_transaction_table");
-                        transaction_table.append("<tbody>");
+                        var transactions = result["transactions"];
+                        var mytransactions = result["my_transactions_record"]; 
 
-                        for(var i in result["transactions"]){
-                            var transaction = JSON.parse(result["transactions"][i]);
-                            transaction_table.append("<tr><td>" + transaction["sender"] + "</td>"+"<td>" + transaction["recipient"] + "</td>"+"<td>" + transaction["value"] + "</td>"+"<td>" + transaction["signature"] + "</td>"+"</tr>");
+                        for(var i in transactions){
+                            var transaction = JSON.parse(transactions[i]);
+                            transaction_table.append("<tr><td>" + transaction["sender"]||"" + "</td>"+"<td>" + transaction["recipient"]||"" + "</td>"+"<td>" + transaction["value"]||"" + "</td>"+"<td>" + transaction["signature"]||"" + "</td>"+"</tr>");
                         }
-                        transaction_table.append("</tbody>");
-                        my_transaction_table.append("<tbody>");
 
-                        for(var i in result["my_transactions_record"]){
+                        for(var i in mytransactions){
                             var transaction = JSON.parse(result["my_transactions_record"][i]);
-                            my_transaction_table.append("<tr><td>" + transaction["sender"] + "</td>"+"<td>" + transaction["recipient"] + "</td>"+"<td>" + transaction["value"] + "</td>"+"<td>" + transaction["signature"] + "</td>"+"</tr>");
+                            my_transaction_table.append("<tr><td>" + transaction["sender"]||"" + "</td>"+"<td>" + transaction["recipient"]||"" + "</td>"+"<td>" + transaction["value"]||"" + "</td>"+"<td>" + transaction["signature"]||"" + "</td>"+"</tr>");
                         }
-                        my_transaction_table.append("</tbody>");
-
                     },
                     error: function (xhr, status, error) {
                         alert("Result: " + status + " " + error + " " + xhr.status + " " + xhr.statusText)
