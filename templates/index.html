@@ -12,7 +12,7 @@
     <body>
         <nav>
             <div class="nav-wrapper blue lighten-3">
-              <a href="#" class="brand-logo right">Bitcoin Wallet</a>
+              <a id="port_no" href="#" class="brand-logo right">Bitcoin Wallet</a>
               <ul id="nav-mobile" class="left hide-on-med-and-down">
                 <!-- <li><a href="sass.html">Sass</a></li>
                 <li><a href="badges.html">Components</a></li>
@@ -174,6 +174,7 @@
         <script>
         M.AutoInit();
         var host_port = "{{host_port}}";
+        document.getElementById("port_no").innerHTML = host_port + " Bitcoin Wallet";
         // var host_port = "5000";
 
         $(document).ready(function () {
@@ -279,7 +280,7 @@
                         var table = $("#wallet_table");
                         table.html("");
                        
-                        var template = '<div class="section"><h5>Wallet:</h5><p><div><b>Sender: </b>'+ result["public_key"]+'</div><div class="divider"></div><br><div><b>Private Key: </b>'+ result["private_key"]+'</div><br><div class="divider"></div><div><b>Balance: </b>'+ result["balance"]+'</div><br></p><div class="divider"></div></div>';
+                        var template = '<div class="section"><h5>Wallet:</h5><p><div><b>Public Key: </b>'+ result["public_key"]+'</div><div class="divider"></div><br><div><b>Private Key: </b>'+ result["private_key"]+'</div><br><div class="divider"></div><div><b>Balance: </b>'+ result["balance"]+'</div><br></p><div class="divider"></div></div>';
                         table.append(template);
                     },
                     error: function (xhr, status, error) {
